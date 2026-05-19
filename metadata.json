@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Organizador de Round Médico",
+  "description": "Ferramenta profissional e metódica para estruturação de evoluções de casos clínicos em formato de Round Médico e cálculo de critérios de alta.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
