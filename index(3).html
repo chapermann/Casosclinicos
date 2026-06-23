@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passagem de Plantão — Painel Clínico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --surface:#F2F6F6;
+    --surface-alt:#E8EFEF;
+    --ink:#16242A;
+    --ink-soft:#4B5E63;
+    --primary:#145C66;
+    --primary-dark:#0B3940;
+    --line:#D8E2E2;
+    --pending:#B5453E;
+    --pending-bg:#FBEAE8;
+    --done:#2E7D5B;
+    --done-bg:#E7F3ED;
+    --mono:'JetBrains Mono', monospace;
+    --sans:'Open Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1080px;margin:0 auto;padding:0 24px 64px;}
+
+  /* ---------- header ---------- */
+  .app-header{
+    display:flex;align-items:center;gap:16px;
+    padding:28px 0 20px;border-bottom:1px solid var(--line);
+  }
+  .brand-mark{
+    width:44px;height:44px;border-radius:10px;
+    background:linear-gradient(155deg,var(--primary),var(--primary-dark));
+    color:#fff;font-family:var(--mono);font-weight:600;font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(11,57,64,.25);
+    flex-shrink:0;
+  }
+  .app-header h1{margin:0;font-size:21px;font-weight:700;letter-spacing:.2px;}
+  .brand-sub{margin:2px 0 0;font-size:13px;color:var(--ink-soft);}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:1px solid var(--line);}
+  .tab{
+    appearance:none;border:none;background:none;cursor:pointer;
+    font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink-soft);
+    padding:12px 16px;border-bottom:2px solid transparent;
+    display:flex;align-items:center;gap:8px;
+  }
+  .tab:hover:not(:disabled){color:var(--primary-dark);}
+  .tab.active{color:var(--primary-dark);border-bottom-color:var(--primary);}
+  .tab:disabled{color:#A8B6B8;cursor:not-allowed;}
+  .tag{
+    font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.3px;
+    background:var(--surface-alt);color:var(--ink-soft);
+    padding:2px 6px;border-radius:4px;text-transform:uppercase;
+  }
+
+  main{padding-top:24px;}
+  .module-panel[hidden]{display:none;}
+
+  /* ---------- shift bar ---------- */
+  .shift-bar{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;margin-bottom:24px;
+  }
+  .shift-bar label{font-size:12.5px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;}
+  .shift-bar input[type=text]{
+    font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:6px;
+    padding:7px 10px;min-width:230px;color:var(--ink);background:#fff;
+  }
+  .ghost-btn{
+    appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:var(--sans);font-size:12.5px;font-weight:600;border-radius:6px;
+    padding:8px 12px;cursor:pointer;
+  }
+  .ghost-btn:hover{border-color:var(--primary);color:var(--primary-dark);}
+
+  /* ---------- bed zones ---------- */
+  .zone{margin-bottom:28px;}
+  .zone-title{
+    display:flex;align-items:baseline;gap:10px;margin-bottom:10px;
+  }
+  .zone-title h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.6px;color:var(--ink);}
+  .zone-count{font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
+  .bed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
+
+  .bed-card{
+    border:1px solid var(--line);border-radius:10px;background:#fff;
+    padding:12px 10px 10px;cursor:pointer;text-align:left;
+    box-shadow:0 1px 0 rgba(0,0,0,.02), 0 2px 6px rgba(20,40,42,.05);
+    transition:transform .08s ease, box-shadow .08s ease;
+    font-family:var(--sans);
+  }
+  .bed-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(20,40,42,.10);}
+  .bed-card:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  .bed-code{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--ink);}
+  .bed-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+  .lamp{width:9px;height:9px;border-radius:50%;background:var(--pending);box-shadow:0 0 0 3px var(--pending-bg);}
+  .lamp.done{background:var(--done);box-shadow:0 0 0 3px var(--done-bg);}
+  .bed-status{font-size:10.5px;color:var(--ink-soft);font-weight:600;}
+
+  /* ---------- compiled output ---------- */
+  .compiled-block{
+    border-top:1px solid var(--line);padding-top:18px;margin-top:8px;
+  }
+  .compiled-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+  .compiled-head h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.6px;}
+  .compiled-actions{display:flex;gap:8px;}
+  textarea#compiled-plantao, textarea#compiled-rounds{
+    width:100%;min-height:220px;border:1px solid var(--line);border-radius:8px;
+    padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--ink);
+    resize:vertical;background:var(--surface);
+  }
+  .primary-btn{
+    appearance:none;border:none;background:var(--primary);color:#fff;
+    font-family:var(--sans);font-size:12.5px;font-weight:700;border-radius:6px;
+    padding:8px 14px;cursor:pointer;
+  }
+  .primary-btn:hover{background:var(--primary-dark);}
+  .primary-btn:disabled{background:#A8B6B8;cursor:not-allowed;}
+
+  /* ---------- reserved module placeholder ---------- */
+  .placeholder{
+    border:1px dashed var(--line);border-radius:10px;padding:40px 24px;text-align:center;color:var(--ink-soft);
+  }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(11,30,33,.45);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal{
+    background:#fff;border-radius:12px;max-width:560px;width:100%;
+    max-height:88vh;overflow-y:auto;padding:22px 24px;
+    box-shadow:0 18px 40px rgba(11,30,33,.25);
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .modal-bed-code{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--primary-dark);}
+  .modal label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin:14px 0 6px;}
+  .modal textarea{
+    width:100%;min-height:120px;border:1px solid var(--line);border-radius:8px;
+    padding:10px 12px;font-family:var(--sans);font-size:13.5px;color:var(--ink);resize:vertical;
+  }
+  .modal textarea#modalResult{font-family:var(--mono);font-size:12.5px;background:var(--surface);min-height:200px;}
+  .privacy-note{font-size:11.5px;color:var(--pending);margin:6px 0 0;}
+  .modal-status{font-size:12.5px;color:var(--ink-soft);margin-top:10px;min-height:16px;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .modal-close{
+    appearance:none;border:none;background:none;color:var(--ink-soft);font-size:13px;cursor:pointer;font-weight:600;
+  }
+
+  footer.note{margin-top:40px;font-size:11.5px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:14px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="app-header">
+    <div class="brand-mark">PP</div>
+    <div>
+      <h1>Passagem de Plantão</h1>
+      <p class="brand-sub">Painel clínico · Sala Vermelha (11 leitos) &amp; Retaguarda do Trauma (6 leitos)</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="plantao">01 · Passagem de Plantão</button>
+    <button class="tab" data-tab="rounds">02 · Rounds Médicos</button>
+    <button class="tab" data-tab="prontuario" disabled>03 · Prontuário <span class="tag">em definição</span></button>
+    <button class="tab" data-tab="resumos" disabled>04 · Resumos <span class="tag">em definição</span></button>
+  </nav>
+
+  <main>
+
+    <!-- ===================== MÓDULO 1 — PASSAGEM DE PLANTÃO ===================== -->
+    <section class="module-panel" id="panel-plantao" data-module="plantao">
+
+      <div class="shift-bar">
+        <div>
+          <label for="shift-plantao">Identificação do plantão</label>
+          <input type="text" id="shift-plantao">
+        </div>
+        <button class="ghost-btn" data-reset="plantao">Reiniciar plantão</button>
+      </div>
+
+      <div class="zone" data-room="vermelha">
+        <div class="zone-title"><h2>Sala Vermelha</h2><span class="zone-count">11 leitos</span></div>
+        <div class="bed-grid" id="grid-plantao-vermelha"></div>
+      </div>
+
+      <div class="zone" data-room="retaguarda">
+        <div class="zone-title"><h2>Retaguarda do Trauma</h2><span class="zone-count">6 leitos</span></div>
+        <div class="bed-grid" id="grid-plantao-retaguarda"></div>
+      </div>
+
+      <div class="compiled-block">
+        <div class="compiled-head">
+          <h2>Compilação do plantão</h2>
+          <div class="compiled-actions">
+            <button class="ghost-btn" data-copy="plantao">Copiar tudo</button>
+            <button class="primary-btn" data-download="plantao">Baixar .txt</button>
+          </div>
+        </div>
+        <textarea id="compiled-plantao" readonly placeholder="Os casos processados aparecerão aqui, organizados por leito."></textarea>
+      </div>
+
+    </section>
+
+    <!-- ===================== MÓDULO 2 — ROUNDS MÉDICOS ===================== -->
+    <section class="module-panel" id="panel-rounds" data-module="rounds" hidden>
+
+      <div class="shift-bar">
+        <div>
+          <label for="shift-rounds">Identificação do round</label>
+          <input type="text" id="shift-rounds">
+        </div>
+        <button class="ghost-btn" data-reset="rounds">Reiniciar round</button>
+      </div>
+
+      <div class="zone" data-room="vermelha">
+        <div class="zone-title"><h2>Sala Vermelha</h2><span class="zone-count">11 leitos</span></div>
+        <div class="bed-grid" id="grid-rounds-vermelha"></div>
+      </div>
+
+      <div class="zone" data-room="retaguarda">
+        <div class="zone-title"><h2>Retaguarda do Trauma</h2><span class="zone-count">6 leitos</span></div>
+        <div class="bed-grid" id="grid-rounds-retaguarda"></div>
+      </div>
+
+      <div class="compiled-block">
+        <div class="compiled-head">
+          <h2>Registro do round</h2>
+          <div class="compiled-actions">
+            <button class="ghost-btn" data-copy="rounds">Copiar tudo</button>
+            <button class="primary-btn" data-download="rounds">Baixar .txt</button>
+          </div>
+        </div>
+        <textarea id="compiled-rounds" readonly placeholder="As condutas e decisões processadas aparecerão aqui, organizadas por leito."></textarea>
+      </div>
+
+    </section>
+
+    <!-- ===================== MÓDULOS RESERVADOS ===================== -->
+    <section class="module-panel" id="panel-prontuario" data-module="prontuario" hidden>
+      <div class="placeholder">Módulo 3 — Organização do Prontuário. Aguardando definição do padrão a ser seguido.</div>
+    </section>
+    <section class="module-panel" id="panel-resumos" data-module="resumos" hidden>
+      <div class="placeholder">Módulo 4 — Resumos para direção, imprensa e famílias. Aguardando definição de enquadramento.</div>
+    </section>
+
+  </main>
+
+  <footer class="note">
+    Nenhum dado é armazenado entre sessões — tudo permanece apenas na memória do navegador durante o uso e é apagado ao recarregar a página. Não inclua nomes de pacientes, médicos ou outros dados identificáveis nos campos de evolução.
+  </footer>
+
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-bed-code" id="modalBedCode"></span>
+      <button class="modal-close" id="modalClose">Fechar</button>
+    </div>
+
+    <label for="modalInput">Cole aqui a evolução médica</label>
+    <textarea id="modalInput" placeholder="Cole aqui a evolução médica"></textarea>
+    <p class="privacy-note">Não inclua nomes de pacientes, médicos ou outros dados que identifiquem pessoas.</p>
+
+    <div id="modalExtraWrap" hidden>
+      <label for="modalExtraInput">Decisões definidas no round (opcional, reforça o registro)</label>
+      <textarea id="modalExtraInput" placeholder="Ex.: reduzir FiO2, solicitar TC de tórax, coletar hemoculturas..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="primary-btn" id="modalProcess">Processar</button>
+    </div>
+    <div class="modal-status" id="modalStatus"></div>
+
+    <div id="modalResultWrap" hidden>
+      <label for="modalResult">Resultado compilado</label>
+      <textarea id="modalResult" readonly></textarea>
+      <div class="modal-actions">
+        <button class="primary-btn" id="modalSave">Salvar e marcar leito como concluído</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO — AJUSTE AQUI conforme o seu Cloudflare Worker / NVIDIA NIM
+   ========================================================================= */
+const CONFIG = {
+  // URL do seu Worker-proxy (a chave NVIDIA fica oculta no Worker, nunca aqui).
+  proxyUrl: "https://nvidia-api-proxy.chapermann.workers.dev/",
+  // Slug do modelo na NVIDIA NIM. Confirme se seu Worker usa/repassa este campo
+  // ou se o modelo já está fixado no próprio Worker (nesse caso este valor é ignorado).
+  model: "meta/llama-3.3-70b-instruct",
+  temperature: 0.3,
+  maxTokens: 700
+};
+
+/* =========================================================================
+   PROMPTS DE SISTEMA POR MÓDULO
+   ========================================================================= */
+const SYSTEM_PROMPTS = {
+  plantao: `Você é um assistente de organização documental para passagem de plantão em ambiente de terapia intensiva/emergência.
+Sua única função é compilar, organizar e resumir as informações fornecidas. Você NUNCA sugere condutas, diagnósticos,
+exames ou tratamentos que não estejam explicitamente mencionados no texto recebido.
+
+Regras obrigatórias:
+1. Nunca registre nomes de pacientes, médicos, ou qualquer dado que identifique pessoas. Refira-se ao paciente apenas pelo leito informado.
+2. Estruture a saída exatamente nestes campos, nesta ordem, com respostas objetivas e diretas (frases curtas, não texto corrido):
+   Leito | Dias de internação | Motivo de internação | Modo ventilatório atual | Estabilidade hemodinâmica |
+   Pontos de atenção | Ação imediata necessária | Pendências | Definição da rotina | Dieta/cirurgia/sangue/urgências |
+   Definição de investimento terapêutico (reanimação em PCR) | Limites de cuidado definidos.
+3. Se o peso não for informado no texto, assuma 75 kg como padrão; não pergunte, apenas utilize esse valor caso seja relevante para algum dado citado.
+4. Use o sexo exatamente como informado no texto; nunca infira.
+5. Se o texto mencionar critérios de alta da UTI/Sala Vermelha, inclua a frase: "Paciente preenche critérios de alta médica para a enfermaria."
+6. Linguagem extremamente formal: sem emojis, sem abreviações coloquiais, sem gírias.
+7. Nunca ofereça sugestão de conduta, diagnóstico ou tratamento que não esteja explicitamente no texto.
+8. Finalize sempre com uma linha "Conduta a definir:" — se houver pendência sem decisão registrada, reforce isso explicitamente; se não houver pendência, escreva "Nenhuma pendência de conduta identificada no texto fornecido."
+9. O resultado deve ser lido em até 2 minutos (aproximadamente 150 a 200 palavras no total), mantendo máxima objetividade.
+10. Se um campo não tiver informação no texto fornecido, escreva "Não informado" — nunca invente dados.`,
+
+  rounds: `Você é um assistente de organização documental para discussão de casos em rounds médicos multiprofissionais.
+Sua única função é compilar a evolução do paciente e as decisões tomadas durante o round. Você NUNCA sugere condutas,
+diagnósticos ou tratamentos que não tenham sido explicitamente mencionados no texto ou nas decisões informadas.
+
+Regras obrigatórias:
+1. Nunca registre nomes de pacientes, médicos, ou qualquer dado que identifique pessoas. Refira-se ao paciente apenas pelo leito informado.
+2. Estruture a saída em duas partes, claramente tituladas:
+   (A) RESUMO CLÍNICO ATUAL — síntese objetiva do estado do paciente a partir da evolução fornecida (máximo 5 frases curtas).
+   (B) CONDUTAS E DECISÕES DO ROUND — lista objetiva de todas as decisões diagnósticas e terapêuticas mencionadas
+       (ex.: ajuste de sedação, redução de FiO2, solicitação de exame, discussão de desmame de ventilação mecânica,
+       coleta de culturas, troca de antibiótico).
+3. Se um problema clínico foi identificado no texto mas não há decisão explícita de conduta para ele, sinalize-o na lista como
+   "Conduta pendente de definição" — nunca preencha essa lacuna com uma sugestão própria.
+4. Se o peso não for informado, assuma 75 kg como padrão; use o sexo exatamente como informado no texto.
+5. Linguagem formal, sem emojis ou gírias, frases curtas e objetivas. Sem texto corrido.`
+};
+
+/* =========================================================================
+   LEITOS
+   ========================================================================= */
+function buildBeds(prefix, count, roomLabel){
+  return Array.from({length:count}, (_,i)=>({
+    id: `${prefix}${i+1}`,
+    label: `${roomLabel} ${i+1}`
+  }));
+}
+const BED_SETS = {
+  vermelha: buildBeds('V', 11, 'Vermelha'),
+  retaguarda: buildBeds('R', 6, 'Retaguarda')
+};
+
+/* =========================================================================
+   ESTADO — apenas em memória, nada é persistido (privacidade)
+   ========================================================================= */
+const state = {
+  plantao: { beds: {}, },
+  rounds:  { beds: {}, }
+};
+['plantao','rounds'].forEach(mod=>{
+  [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(b=>{
+    state[mod].beds[b.id] = { done:false, text:'' };
+  });
+});
+
+/* =========================================================================
+   RENDER DOS GRIDS DE LEITO
+   ========================================================================= */
+function renderGrid(moduleKey, room){
+  const container = document.getElementById(`grid-${moduleKey}-${room}`);
+  container.innerHTML = '';
+  BED_SETS[room].forEach(bed=>{
+    const st = state[moduleKey].beds[bed.id];
+    const btn = document.createElement('button');
+    btn.className = 'bed-card';
+    btn.dataset.module = moduleKey;
+    btn.dataset.bed = bed.id;
+    btn.innerHTML = `
+      <div class="bed-code">${bed.id}</div>
+      <div class="bed-row">
+        <span class="bed-status">${st.done ? 'Registrado' : 'Pendente'}</span>
+        <span class="lamp ${st.done ? 'done' : ''}"></span>
+      </div>`;
+    btn.addEventListener('click', ()=>openModal(moduleKey, bed.id, bed.label));
+    container.appendChild(btn);
+  });
+}
+function renderAllGrids(){
+  renderGrid('plantao','vermelha');
+  renderGrid('plantao','retaguarda');
+  renderGrid('rounds','vermelha');
+  renderGrid('rounds','retaguarda');
+}
+renderAllGrids();
+
+/* =========================================================================
+   TABS
+   ========================================================================= */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    if (tab.disabled) return;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.querySelectorAll('.module-panel').forEach(p=>{
+      p.hidden = p.dataset.module !== target;
+    });
+  });
+});
+
+/* default shift labels */
+function nowLabel(){
+  const d = new Date();
+  return d.toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' });
+}
+document.getElementById('shift-plantao').value = `Plantão de ${nowLabel()}`;
+document.getElementById('shift-rounds').value = `Round de ${nowLabel()}`;
+
+/* =========================================================================
+   MODAL
+   ========================================================================= */
+const modalOverlay = document.getElementById('modalOverlay');
+const modalBedCode = document.getElementById('modalBedCode');
+const modalInput = document.getElementById('modalInput');
+const modalExtraWrap = document.getElementById('modalExtraWrap');
+const modalExtraInput = document.getElementById('modalExtraInput');
+const modalStatus = document.getElementById('modalStatus');
+const modalResultWrap = document.getElementById('modalResultWrap');
+const modalResult = document.getElementById('modalResult');
+const modalProcess = document.getElementById('modalProcess');
+const modalSave = document.getElementById('modalSave');
+
+let activeModule = null;
+let activeBedId = null;
+let activeBedLabel = null;
+
+function openModal(moduleKey, bedId, bedLabel){
+  activeModule = moduleKey;
+  activeBedId = bedId;
+  activeBedLabel = bedLabel;
+  modalBedCode.textContent = `${bedId} · ${bedLabel}`;
+  const existing = state[moduleKey].beds[bedId];
+  modalInput.value = '';
+  modalExtraInput.value = '';
+  modalExtraWrap.hidden = moduleKey !== 'rounds';
+  modalStatus.textContent = '';
+  modalResultWrap.hidden = true;
+  modalResult.value = existing.text || '';
+  if (existing.done) {
+    modalResultWrap.hidden = false;
+    modalResult.value = existing.text;
+  }
+  modalOverlay.hidden = false;
+}
+function closeModal(){
+  modalOverlay.hidden = true;
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e)=>{ if (e.target === modalOverlay) closeModal(); });
+
+modalProcess.addEventListener('click', async ()=>{
+  const evolucao = modalInput.value.trim();
+  if (!evolucao){
+    modalStatus.textContent = 'Cole a evolução médica antes de processar.';
+    return;
+  }
+  modalProcess.disabled = true;
+  modalStatus.textContent = 'Processando…';
+
+  let userContent = `Leito: ${activeBedId} (${activeBedLabel})\n\nEvolução médica colada:\n${evolucao}`;
+  if (activeModule === 'rounds' && modalExtraInput.value.trim()){
+    userContent += `\n\nDecisões adicionais informadas no round:\n${modalExtraInput.value.trim()}`;
+  }
+
+  try{
+    const text = await callAI(SYSTEM_PROMPTS[activeModule], userContent);
+    modalResult.value = text;
+    modalResultWrap.hidden = false;
+    modalStatus.textContent = 'Pronto. Revise e salve.';
+  }catch(err){
+    modalStatus.textContent = `Erro ao chamar a API: ${err.message}. Verifique CONFIG.proxyUrl/CONFIG.model no código.`;
+  }finally{
+    modalProcess.disabled = false;
+  }
+});
+
+modalSave.addEventListener('click', ()=>{
+  state[activeModule].beds[activeBedId] = { done:true, text: modalResult.value };
+  renderGrid(activeModule, activeBedId.startsWith('V') ? 'vermelha' : 'retaguarda');
+  updateCompiled(activeModule);
+  closeModal();
+});
+
+/* =========================================================================
+   CHAMADA À API (via Cloudflare Worker proxy)
+   ========================================================================= */
+async function callAI(systemPrompt, userContent){
+  const response = await fetch(CONFIG.proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: CONFIG.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ],
+      temperature: CONFIG.temperature,
+      max_tokens: CONFIG.maxTokens
+    })
+  });
+  if (!response.ok){
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
+/* =========================================================================
+   COMPILAÇÃO / EXPORTAÇÃO
+   ========================================================================= */
+function updateCompiled(moduleKey){
+  const shiftLabel = document.getElementById(`shift-${moduleKey}`).value;
+  const lines = [`${moduleKey === 'plantao' ? 'PASSAGEM DE PLANTÃO' : 'REGISTRO DE ROUND'} — ${shiftLabel}`, '='.repeat(60), ''];
+  [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(bed=>{
+    const st = state[moduleKey].beds[bed.id];
+    if (st.done && st.text){
+      lines.push(`--- ${bed.id} · ${bed.label} ---`);
+      lines.push(st.text);
+      lines.push('');
+    }
+  });
+  document.getElementById(`compiled-${moduleKey}`).value = lines.join('\n');
+}
+
+document.querySelectorAll('[data-copy]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const mod = btn.dataset.copy;
+    const ta = document.getElementById(`compiled-${mod}`);
+    ta.select();
+    document.execCommand('copy');
+    btn.textContent = 'Copiado!';
+    setTimeout(()=>{ btn.textContent = 'Copiar tudo'; }, 1500);
+  });
+});
+
+document.querySelectorAll('[data-download]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const mod = btn.dataset.download;
+    const content = document.getElementById(`compiled-${mod}`).value || 'Nenhum caso processado ainda.';
+    const blob = new Blob([content], { type:'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+    a.href = url;
+    a.download = `${mod}-${stamp}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+document.querySelectorAll('[data-reset]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const mod = btn.dataset.reset;
+    if (!confirm('Isso vai limpar todos os leitos registrados neste módulo. Confirmar?')) return;
+    [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(bed=>{
+      state[mod].beds[bed.id] = { done:false, text:'' };
+    });
+    renderGrid(mod,'vermelha');
+    renderGrid(mod,'retaguarda');
+    document.getElementById(`compiled-${mod}`).value = '';
+    document.getElementById(`shift-${mod}`).value = `${mod === 'plantao' ? 'Plantão' : 'Round'} de ${nowLabel()}`;
+  });
+});
+</script>
+</body>
+</html>
