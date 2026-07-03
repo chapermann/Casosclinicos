@@ -12,6 +12,7 @@
             --red-light: #ef4444;
             --green-light: #22c55e;
             --accent: #0284c7;
+            --dark-slate: #0f172a;
         }
 
         body {
@@ -29,27 +30,45 @@
         }
 
         header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 15px;
         }
 
-        h1, h2, h3 {
-            color: #0f172a;
-            margin-top: 0;
+        .header-text h1 { margin: 0 0 5px 0; color: var(--dark-slate); }
+        .header-text p { margin: 0; color: #64748b; }
+
+        .btn-config-toggle {
+            background-color: #64748b;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
         }
 
+        .btn-config-toggle:hover { background-color: #475569; }
+
+        h2, h3 { color: var(--dark-slate); margin-top: 0; }
+
         .sector-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            color: #475569;
         }
 
         .grid-beds {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 12px;
             margin-bottom: 35px;
         }
@@ -79,37 +98,28 @@
             background-color: #f0f9ff;
         }
 
-        .status-light {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-        }
+        .status-light { width: 13px; height: 13px; border-radius: 50%; }
+        .status-red { background-color: var(--red-light); box-shadow: 0 0 6px var(--red-light); }
+        .status-green { background-color: var(--green-light); box-shadow: 0 0 6px var(--green-light); }
 
-        .status-red { background-color: var(--red-light); box-shadow: 0 0 8px var(--red-light); }
-        .status-green { background-color: var(--green-light); box-shadow: 0 0 8px var(--green-light); }
-
-        .workspace {
-            display: none;
+        .panel-block {
             background: #fff;
             padding: 25px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+        .workspace { display: none; }
+        .config-panel { display: none; background-color: #f8fafc; border: 2px dashed #cbd5e1; }
 
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; }
 
         textarea {
             width: 100%;
-            height: 150px;
+            height: 140px;
             padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -118,6 +128,8 @@
             resize: vertical;
             box-sizing: border-box;
         }
+
+        .config-textarea { height: 180px; background: #fafafa; }
 
         .section-checklist {
             background: #f1f5f9;
@@ -128,23 +140,23 @@
 
         .checklist-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 10px;
         }
 
         .chk-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
             background: #fff;
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 4px;
             border: 1px solid var(--border-color);
         }
 
-        .chk-item input {
-            cursor: pointer;
-        }
+        .chk-label { font-size: 0.9rem; font-weight: 500; padding-right: 10px; }
+        .radio-group { display: flex; gap: 15px; white-space: nowrap; }
+        .radio-group label { display: inline-flex; align-items: center; gap: 4px; font-weight: normal; font-size: 0.9rem; margin: 0; cursor: pointer; }
 
         .btn-action {
             background-color: var(--accent);
@@ -157,10 +169,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-
-        .btn-action:hover {
-            background-color: #0369a1;
-        }
+        .btn-action:hover { background-color: #0369a1; }
 
         .btn-download {
             background-color: #475569;
@@ -172,14 +181,11 @@
             cursor: pointer;
             margin-top: 10px;
         }
-
-        .btn-download:hover {
-            background-color: #334155;
-        }
+        .btn-download:hover { background-color: #334155; }
 
         .output-box {
-            margin-top: 25px;
-            background: #0f172a;
+            margin-top: 20px;
+            background: var(--dark-slate);
             color: #f8fafc;
             padding: 20px;
             border-radius: 6px;
@@ -190,28 +196,49 @@
             overflow-y: auto;
         }
 
-        .tab-compiled {
-            margin-top: 40px;
-            border-top: 3px solid #cbd5e1;
-            padding-top: 20px;
-        }
+        .tab-compiled { border-top: 3px solid #cbd5e1; padding-top: 25px; margin-top: 40px; }
+        .alert-info { background: #e0f2fe; color: #0369a1; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Gestão de Prontuários e Passagem de Caso</h1>
-        <p>Geração automatizada de Round Médico e Passagem de Plantão estruturada.</p>
+        <div class="header-text">
+            <h1>Gestão de Prontuários e Passagem de Caso</h1>
+            <p>Sala Vermelha & Retaguarda do Trauma — Hospital Geral</p>
+        </div>
+        <button class="btn-config-toggle" onclick="toggleConfigPanel()">⚙ Configurações do Sistema</button>
     </header>
 
+    <!-- PAINEL DE CONFIGURAÇÃO ADMINISTRATIVA -->
+    <div class="panel-block config-panel" id="config-panel">
+        <h2>Gerenciador de Modelos (.md)</h2>
+        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 15px;">Insira um item por linha para atualizar os formulários do sistema de forma dinâmica.</p>
+        
+        <div class="form-group">
+            <label>Itens do MODELO_CHECKLIST_MEDICO.md (Um por linha):</label>
+            <textarea id="config-checklist-raw" class="config-textarea"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Itens do MODELO_ALTA_MEDICA.md (Um por linha):</label>
+            <div class="alert-info">Coloque o sinal de menos (-) antes do texto apenas se a resposta "Sim" for prejudicial para a alta (subtrair pontuação). Exemplo: <i>-Paciente tem doença clínica descompensada?</i></div>
+            <textarea id="config-alta-raw" class="config-textarea"></textarea>
+        </div>
+        
+        <button class="btn-action" style="background-color: #10b981;" onclick="salvarConfiguracoesFormularios()">Atualizar Formulários</button>
+    </div>
+
+    <!-- PAINEL PRINCIPAL DE LEITOS -->
     <div class="sector-title">Sala Vermelha</div>
     <div class="grid-beds" id="sector-red"></div>
 
     <div class="sector-title">Retaguarda do Trauma</div>
     <div class="grid-beds" id="sector-trauma"></div>
 
-    <div class="workspace" id="workspace">
+    <!-- ÁREA DE TRABALHO DO LEITO SELECIONADO -->
+    <div class="panel-block workspace" id="workspace">
         <h2 id="workspace-title">Leito X</h2>
         
         <div class="form-group">
@@ -225,7 +252,7 @@
         </div>
 
         <div class="section-checklist" style="background-color: #e0f2fe;">
-            <h3>MODELO_ALTA_MEDICA.md (Critérios de Alta para Enfermaria de Clínica Médica)</h3>
+            <h3>MODELO_ALTA_MEDICA.md (Critérios de Alta para Enfermaria)</h3>
             <div class="checklist-grid" id="alta-container"></div>
         </div>
 
@@ -244,9 +271,10 @@
         </div>
     </div>
 
+    <!-- ABA DE COMPILAÇÃO DA UNIDADE -->
     <div class="tab-compiled">
         <h2>Consolidação de Evoluções da Unidade</h2>
-        <p>Abaixo você pode gerar e compilar todos os leitos alimentados nas últimas 12 horas.</p>
+        <p>Gere e compile todos os leitos alimentados pelo plantão nas últimas 12 horas.</p>
         <button class="btn-action" style="background-color: #10b981;" onclick="renderizarConsolidado()">Gerar Relatório Consolidado</button>
         <div class="output-box" id="output-consolidado" style="background: #1e293b;">Nenhum relatório compilado até o momento.</div>
         <button class="btn-download" id="btn-download-consolidado" style="display:none;" onclick="downloadTxt('consolidado')">Download Consolidado (.txt)</button>
@@ -257,58 +285,122 @@
     const CONFIG = {
         PROXY_URL: "https://nvidia-api-proxy.chapermann.workers.dev/v1/chat/completions",
         MODEL: "openai/gpt-oss-120b",
-        MEMORY_TIMEOUT: 12 * 60 * 60 * 1000 // 12 horas
+        MEMORY_TIMEOUT: 12 * 60 * 60 * 1000 
     };
 
-    const CHECKLIST_ITEMS = [
-        { id: "tvp", text: "Profilaxia TVP" },
-        { id: "ulcera", text: "Profilaxia úlcera (Gástrica/pele)" },
-        { id: "delirium", text: "Profilaxia Delirium" },
-        { id: "dieta", text: "Paciente recebendo Dieta" },
-        { id: "atb", text: "Antibioticoterapia" },
-        { id: "culturas", text: "Culturas coletadas" },
-        { id: "eliminaçoes", text: "Eliminações fisiológicas ocorridas" },
-        { id: "enfermagem", text: "Checar prescrições/anotações com enfermagem" },
-        { id: "monitorizaçao", text: "Monitorização completa estabelecida" },
-        { id: "vm", text: "Em ventilação mecânica com parâmetros anotados" },
-        { id: "banho", text: "Acompanhou banho / Avaliou lesões de pele" },
-        { id: "dialise", text: "Em diálise ativa" },
-        { id: "dispositivos", text: "Retirada/revisão de dispositivos (CVD, PVP, drenos)" },
-        { id: "fisioterapia", text: "Fisioterapia acompanhando" },
-        { id: "fono", text: "Fonoaudiologia acompanhando" },
-        { id: "buco", text: "Avaliação da Odontologia / Bucomaxilofacial" },
-        { id: "foto", text: "Registro fotográfico de lesões realizado" },
-        { id: "especialidades", text: "Acompanhado por outras especialidades" },
-        { id: "mobilizaçao", text: "Mobilização no leito realizada" },
-        { id: "falta_med", text: "ALGUMA MEDICAÇÃO EM FALTA (inst. ou ind.)" },
-        { id: "previsao_alta", text: "Previsão de alta estabelecida" },
-        { id: "requisito_alta", text: "O que falta para alta médica mapeado" }
+    // Valores padrão iniciais caso o sistema seja aberto pela primeira vez
+    const DEFAULT_CHECKLIST = [
+        "Profilaxia TVP", "Profilaxia úlcera (Gastrica/pele)", "Profilaxia Delirium", "Paciente recebendo Dieta",
+        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem e anotações da enfermagem.",
+        "Monitorização completa?", "Em ventilação mecânica? Anotou os parâmetros ventilatórios?", "Acompanhou o banho do paciente? Lesões de pele?",
+        "Em diálise? Se sim qual programa ou tratamento indicado?", "Retirada de dispositivos? CVD? PVP? Drenos?", "Fisioterapia",
+        "Fonoaudiologia acompanhando?", "Necessidade de avaliação do dentista / bucomaxilofacial?", "Registro fotográfico de lesões?",
+        "Paciente acompanhado por outras especialidades?", "Mobilização?", "ALGUMA MEDICAÇÃO EM FALTA? Institucional ou individualmente?",
+        "Previsão de alta? Quando?", "O que falta para alta médica?"
     ];
 
-    const ALTA_ITEMS = [
-        { id: "c1", text: "1 - Paciente encontra-se de ALTA pelas especialidades cirúrgicas? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c2", text: "2 - Paciente não apresenta nenhuma condição cirúrgica no momento? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c3", text: "3 - Paciente encontra-se em ar ambiente? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c4", text: "4 - Paciente com necessidade de baixo fluxo de O2 (até 5L/min)? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c5", text: "5 - Paciente encontra-se lúcido? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c6", text: "6 - Se não lúcido, encontra-se hemodinamicamente estável? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c7", text: "7 - Paciente encontra-se sem queixas álgicas? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c8", text: "8 - Recebeu alta recente ou esteve internado na clínica médica? (Sim=-1/Não=1)", val: 1, inv: true },
-        { id: "c9", text: "9 - Paciente tem doença clínica descompensada? (Sim=1/Não=-1)", val: 1, inv: false },
-        { id: "c10", text: "10 - Tem doença de especialidade presente no Hospital? (Sim=1/Não=-1)", val: 1, inv: false }
+    const DEFAULT_ALTA = [
+        "1 - Paciente encontra-se de ALTA pelas especialidades cirúrgicas?",
+        "2 - Paciente não apresenta nenhuma condição cirúrgica ou potencialmente cirúrgica no momento?",
+        "3 - Paciente encontra-se em ar ambiente?",
+        "4 - Paciente que precisa de oxigênio, necessita de pouco fluxo (até 5L/min) ou de pouca suplementação de oxigênio?",
+        "5 - Paciente encontra-se lúcido?",
+        "6 - Paciente que não encontra-se lúcido, encontra-se hemodinamicamente estável?",
+        "7 - Paciente encontra-se nesse momento sem queixas álgicas?",
+        "-8 - Paciente recebeu alta recentemente ou esteve internado na clínica médica?",
+        "-9 - Paciente tem doença clínica descompensada?",
+        "10 - Paciente tem doença clínica de especialidade que tenha no Hospital?"
     ];
 
+    let checklistItens Atuais = [];
+    let altaItensAtuais = [];
     let bancoDeDados = {};
     let leitoAtual = null;
+    let localizacaoAtualTexto = "";
 
     function inicializarApp() {
-        carregarMemoria();
+        carregarConfiguracoesModelos();
+        carregarMemoriaClinica();
         renderizarLeitos("Sala Vermelha", 11, "sector-red", "SV");
         renderizarLeitos("Retaguarda do Trauma", 6, "sector-trauma", "RT");
-        renderizarFormularios();
     }
 
-    function carregarMemoria() {
+    function toggleConfigPanel() {
+        const panel = document.getElementById("config-panel");
+        panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    }
+
+    function carregarConfiguracoesModelos() {
+        const chkSalvo = localStorage.getItem("cfg_checklist_list");
+        const altaSalva = localStorage.getItem("cfg_alta_list");
+
+        if (chkSalvo) {
+            checklistItensAtuais = JSON.parse(chkSalvo);
+        } else {
+            checklistItensAtuais = DEFAULT_CHECKLIST.map((txt, index) => ({ id: `k_${index}`, text: txt }));
+        }
+
+        if (altaSalva) {
+            altaItensAtuais = JSON.parse(altaSalva);
+        } else {
+            altaItensAtuais = DEFAULT_ALTA.map((txt, index) => {
+                const isInvertido = txt.startsWith("-");
+                const limpo = isInvertido ? txt.substring(1) : txt;
+                return { id: `a_${index}`, text: limpo, inv: isInvertido };
+            });
+        }
+
+        document.getElementById("config-checklist-raw").value = checklistItensAtuais.map(i => i.text).join("\n");
+        document.getElementById("config-alta-raw").value = altaItensAtuais.map(i => (i.inv ? "-" : "") + i.text).join("\n");
+
+        renderizarCamposFormularios();
+    }
+
+    function salvarConfiguracoesFormularios() {
+        const chkRaw = document.getElementById("config-checklist-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+        const altaRaw = document.getElementById("config-alta-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+
+        checklistItensAtuais = chkRaw.map((txt, index) => ({ id: `k_${index}`, text: txt }));
+        altaItensAtuais = altaRaw.map((txt, index) => {
+            const isInvertido = txt.startsWith("-");
+            const limpo = isInvertido ? txt.substring(1) : txt;
+            return { id: `a_${index}`, text: limpo, inv: isInvertido };
+        });
+
+        localStorage.setItem("cfg_checklist_list", JSON.stringify(checklistItensAtuais));
+        localStorage.setItem("cfg_alta_list", JSON.stringify(altaItensAtuais));
+
+        renderizarCamposFormularios();
+        toggleConfigPanel();
+        if (leitoAtual) carregarLeitoExistenteAposMudanca();
+        alert("Modelos e formulários atualizados com sucesso para toda a unidade!");
+    }
+
+    function renderizarCamposFormularios() {
+        const chkContainer = document.getElementById("checklist-container");
+        chkContainer.innerHTML = checklistItensAtuais.map(item => `
+            <div class="chk-item">
+                <span class="chk-label">${item.text}</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="chk_${item.id}" id="chk_${item.id}_sim" value="sim"> [ ] sim</label>
+                    <label><input type="radio" name="chk_${item.id}" id="chk_${item.id}_nao" value="nao"> [ ] não</label>
+                </div>
+            </div>
+        `).join("");
+
+        const altaContainer = document.getElementById("alta-container");
+        altaContainer.innerHTML = altaItensAtuais.map(item => `
+            <div class="chk-item">
+                <span class="chk-label">${item.text}</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="alta_${item.id}" id="alta_${item.id}_sim" value="sim"> [ ] sim</label>
+                    <label><input type="radio" name="alta_${item.id}" id="alta_${item.id}_nao" value="nao"> [ ] não</label>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    function carregarMemoriaClinica() {
         const dadosSalvos = localStorage.getItem("app_med_data");
         const timestamp = localStorage.getItem("app_med_timestamp");
         
@@ -322,7 +414,7 @@
         }
     }
 
-    function salvarMemoria() {
+    function salvarMemoriaClinica() {
         localStorage.setItem("app_med_data", JSON.stringify(bancoDeDados));
         localStorage.setItem("app_med_timestamp", Date.now().toString());
     }
@@ -338,7 +430,7 @@
             const btn = document.createElement("button");
             btn.className = "btn-bed";
             btn.id = `btn-${idLeito}`;
-            btn.onclick = () => carregarLeito(idLeito, setor, i);
+            btn.onclick = () => carregarLeito(idLeito, setor, i, prefixo);
             btn.innerHTML = `
                 <span>Leito ${i}</span>
                 <div class="status-light ${temEvolucao}" id="light-${idLeito}"></div>
@@ -347,26 +439,9 @@
         }
     }
 
-    function renderizarFormularios() {
-        const chkContainer = document.getElementById("checklist-container");
-        chkContainer.innerHTML = CHECKLIST_ITEMS.map(item => `
-            <div class="chk-item">
-                <input type="checkbox" id="chk-${item.id}">
-                <label for="chk-${item.id}" style="margin:0; font-weight:normal; font-size:0.9rem;">${item.text}</label>
-            </div>
-        `).join("");
-
-        const altaContainer = document.getElementById("alta-container");
-        altaContainer.innerHTML = ALTA_ITEMS.map(item => `
-            <div class="chk-item">
-                <input type="checkbox" id="alta-${item.id}">
-                <label for="alta-${item.id}" style="margin:0; font-weight:normal; font-size:0.85rem;">${item.text}</label>
-            </div>
-        `).join("");
-    }
-
-    function carregarLeito(idLeito, setor, numero) {
+    function carregarLeito(idLeito, setor, numero, prefixo) {
         leitoAtual = idLeito;
+        localizacaoAtualTexto = `${prefixo} Leito ${numero}`;
         document.querySelectorAll(".btn-bed").forEach(b => b.classList.remove("active"));
         document.getElementById(`btn-${idLeito}`).classList.add("active");
         
@@ -377,23 +452,47 @@
         const dados = bancoDeDados[idLeito] || {};
         document.getElementById("input-evolution").value = dados.evolucaoBruta || "";
 
-        CHECKLIST_ITEMS.forEach(item => {
-            document.getElementById(`chk-${item.id}`).checked = dados.checklist ? !!dados.checklist[item.id] : false;
+        preencherRespostasExistentes(dados);
+    }
+
+    function carregarLeitoExistenteAposMudanca() {
+        const dados = bancoDeDados[leitoAtual] || {};
+        preencherRespostasExistentes(dados);
+    }
+
+    function preencherRespostasExistentes(dados) {
+        checklistItensAtuais.forEach(item => {
+            const radSim = document.getElementById(`chk_${item.id}_sim`);
+            const radNao = document.getElementById(`chk_${item.id}_nao`);
+            if (radSim && radNao) {
+                if (dados.checklist && dados.checklist[item.id] === "sim") radSim.checked = true;
+                else if (dados.checklist && dados.checklist[item.id] === "nao") radNao.checked = true;
+                else { radSim.checked = false; radNao.checked = false; }
+            }
         });
 
-        ALTA_ITEMS.forEach(item => {
-            document.getElementById(`alta-${item.id}`).checked = dados.altaCheck ? !!dados.altaCheck[item.id] : false;
+        altaItensAtuais.forEach(item => {
+            const radSim = document.getElementById(`alta_${item.id}_sim`);
+            const radNao = document.getElementById(`alta_${item.id}_nao`);
+            if (radSim && radNao) {
+                if (dados.altaCheck && dados.altaCheck[item.id] === "sim") radSim.checked = true;
+                else if (dados.altaCheck && dados.altaCheck[item.id] === "nao") radNao.checked = true;
+                else { radSim.checked = false; radNao.checked = false; }
+            }
         });
     }
 
     function calcularCriteriosAlta() {
         let pontuacao = 0;
-        ALTA_ITEMS.forEach(item => {
-            const checked = document.getElementById(`alta-${item.id}`).checked;
-            if (item.inv) {
-                pontuacao += checked ? -1 : 1;
+        altaItensAtuais.forEach(item => {
+            const elSim = document.getElementById(`alta_${item.id}_sim`);
+            if (elSim && elSim.checked) {
+                pontuacao += item.inv ? -1 : 1;
             } else {
-                pontuacao += checked ? 1 : -1;
+                const elNao = document.getElementById(`alta_${item.id}_nao`);
+                if (elNao && elNao.checked) {
+                    pontuacao += item.inv ? 1 : -1;
+                }
             }
         });
         return pontuacao;
@@ -404,7 +503,7 @@
 
         const evolucaoTexto = document.getElementById("input-evolution").value.trim();
         if (!evolucaoTexto) {
-            alert("Por favor, preencha a evolução médica de hoje.");
+            alert("Por favor, insira a evolução médica.");
             return;
         }
 
@@ -412,13 +511,17 @@
         document.getElementById("results-area").style.display = "none";
 
         const checklistSalvo = {};
-        CHECKLIST_ITEMS.forEach(item => {
-            checklistSalvo[item.id] = document.getElementById(`chk-${item.id}`).checked;
+        checklistItensAtuais.forEach(item => {
+            const sim = document.getElementById(`chk_${item.id}_sim`).checked;
+            const nao = document.getElementById(`chk_${item.id}_nao`).checked;
+            checklistSalvo[item.id] = sim ? "sim" : (nao ? "nao" : "");
         });
 
         const altaSalvo = {};
-        ALTA_ITEMS.forEach(item => {
-            altaSalvo[item.id] = document.getElementById(`alta-${item.id}`).checked;
+        altaItensAtuais.forEach(item => {
+            const sim = document.getElementById(`alta_${item.id}_sim`).checked;
+            const nao = document.getElementById(`alta_${item.id}_nao`).checked;
+            altaSalvo[item.id] = sim ? "sim" : (nao ? "nao" : "");
         });
 
         const pontuacaoAlta = calcularCriteriosAlta();
@@ -428,53 +531,45 @@
         bancoDeDados[leitoAtual].checklist = checklistSalvo;
         bancoDeDados[leitoAtual].altaCheck = altaSalvo;
         bancoDeDados[leitoAtual].pontuacaoAlta = pontuacaoAlta;
+        bancoDeDados[leitoAtual].localizacao = localizacaoAtualTexto;
 
-        const promptDeProcessamento = construirPromptIA(evolucaoTexto, checklistSalvo, altaSalvo, pontuacaoAlta);
+        const promptDeProcessamento = construirPromptIA(evolucaoTexto, checklistSalvo, altaSalvo, pontuacaoAlta, localizacaoAtualTexto);
 
         try {
             const response = await fetch(CONFIG.PROXY_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: CONFIG.MODEL,
                     messages: [
-                        {
-                            role: "system",
-                            content: "Voce e um assistente medico especialista em compilaçao de prontuarios estruturados. Voce trabalha exclusivamente gerando texto corrido tradicional, sem tabelas, sem caracteres especiais ou formatadores markdown complexos. Siga todas as instruçoes de anonimizaçao e formataçao formal rigidamente."
-                        },
-                        {
-                            role: "user",
-                            content: promptDeProcessamento
-                        }
+                        { role: "system", content: "Voce e um assistente medico especialista em compilaçao de prontuarios. Responda apenas com texto limpo e corrido." },
+                        { role: "user", content: promptDeProcessamento }
                     ],
                     temperature: 0.1
                 })
             });
 
-            if (!response.ok) throw new Error("Erro na comunicaçao com o provedor de IA.");
+            if (!response.ok) throw new Error("Erro de conexão com o servidor de inteligência artificial.");
 
             const data = await response.json();
-            const outputCompleto = data.choices[0].message.content;
-
-            separarOutputs(outputCompleto);
+            separarOutputs(data.choices[0].message.content);
 
             bancoDeDados[leitoAtual].evolvido = true;
             document.getElementById(`light-${leitoAtual}`).className = "status-light status-green";
-            salvarMemoria();
+            salvarMemoriaClinica();
 
         } catch (error) {
-            alert("Erro ao processar inteligência artificial: " + error.message);
+            alert("Erro durante o processamento: " + error.message);
         } finally {
             document.getElementById("loading").style.display = "none";
         }
     }
 
-    function construirPromptIA(evolucao, chk, alta, pontuacao) {
+    function construirPromptIA(evolucao, chk, alta, pontuacao, localizacao) {
         let checklistTexto = "CHECKLIST DIARIO REALIZADO PELO PLANTONISTA:\n";
-        CHECKLIST_ITEMS.forEach(item => {
-            checklistTexto += `- ${item.text}: ${chk[item.id] ? "SIM" : "NAO"}\n`;
+        checklistItensAtuais.forEach(item => {
+            const r = chk[item.id] ? chk[item.id].toUpperCase() : "NAO RESPONDIDO";
+            checklistTexto += `- ${item.text}: ${r}\n`;
         });
 
         let altaTexto = `PONTUACAO DO CRITERIO DE ALTA PARA ENFERMARIA DE CLINICA MEDICA: ${pontuacao} PONTOS\n`;
@@ -485,11 +580,11 @@
         return `
 Você deve ler a evolução médica abaixo e gerar DOIS relatórios distintos em formato de texto plano e corrido (sem colunas, sem tabelas e sem tabulações).
 
-DIRETRIZES IMPORTANTES:
-1. ANONIMIZAÇÃO COMPLETA: Substitua nomes por abreviações (Ex: Paulo da Silva Almeida Junior vira PSAJ). Delete CPFs, identidades ou registros numéricos pessoais.
+DIRETRIZES DE OURO:
+1. ANONIMIZAÇÃO COMPLETA: Substitua nomes por abreviações (Ex: Paulo da Silva Almeida Junior vira PSAJ). Delete CPFs ou identidades.
 2. PESO PADRÃO: Se não houver peso descrito na evolução, assuma obrigatoriamente 75Kg como peso padrão.
-3. FORMAÇÃO TEXTUAL: Use português formal e técnico. Evite abreviações não médicas, emojis ou preciosismo. Use quebras de linha normais para separar as sessões. Não use caracteres ASCII desenhados.
-4. TRADUÇÃO DE TERMOS: Consolide IH (Data de internação), TC (Tomografia), PO (Pós-operatório), NC (Neurocirurgia), CG (Cirurgia Geral). Sinais normais em exames de imagem resuma como normais.
+3. ESTILO: Português extremamente formal e técnico. Sem emojis ou marcas gráficas de Markdown.
+4. TRADUÇÃO DE TERMOS: Consolide IH (Data de internação), TC (Tomografia), PO (Pós-operatório), NC (Neurocirurgia), CG (Cirurgia Geral). 
 
 --- EVOLUÇÃO MÉDICA DE HOJE INSERIDA ---
 ${evolucao}
@@ -497,6 +592,7 @@ ${evolucao}
 --- DADOS ADICIONAIS DO FORMULÁRIO ---
 ${checklistTexto}
 ${altaTexto}
+LOCALIZAÇÃO DO LEITO ATUAL NO SISTEMA: ${localizacao}
 
 Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes exatamente assim:
 
@@ -505,19 +601,20 @@ Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes 
 1. Identificação (Iniciais, idade, sexo, procedência)
 2. Data e Tempo de Internação, Motivo da Internação
 3. Situação cirúrgica (Se PO, tempo decorrido, procedimento)
-4. Comorbidades e condições associadas (histórico, medicações de uso contínuo)
-5. Situação clínica atual (Sedação/RASS, Drogas em infusão contínua, Invasões, Sinais vitais atuais, Ventilação mecânica se houver, Estado neurológico, Exame físico relevante)
-6. Gasometria arterial (data, parâmetros, pH, PaCO2, PaO2, HCO3, BE, lactato)
-7. Exames de imagem (principais achados resumidos)
+4. Comorbidades e condições associadas
+5. Situação clínica atual (Sedação, Drogas em infusão, Invasões, Sinais vitais atuais, VM se houver, Estado neurológico, Exame físico relevante)
+6. Gasometria arterial
+7. Exames de imagem
 8. Exames laboratoriais relevantes
 9. Antibióticos em uso (nome, dose, tempo de uso)
 10. Impressão do caso (sumário)
 11. Condutas e rotina pactuadas
-Incorpore de forma corrida o checklist diário realizado nas sessões pertinentes e adicione ao final uma sessão específica intitulada: Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
+Adicione ao final a sessão: Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
 </ROUND_MEDICO>
 
 <PASSAGEM_PLANTAO>
-[Gere aqui o MODELO_PASSAGEM_PLANTAO: Um texto extremamente conciso e objetivo com em torno de 80 palavras focado puramente na lista de problemas ativos e nas resoluções ou pendências imediatas para o próximo plantão.]
+[Gere aqui o MODELO_PASSAGEM_PLANTAO: O texto deve iniciar OBRIGATORIAMENTE com a identificação padronizada do paciente no seguinte formato exato: "Iniciais do Nome, XX anos, ${localizacao}.".
+Em seguida, continue com o texto altamente objetivo, conciso e focado puramente na lista de problemas e nas resoluções ou pendências imediatas para o próximo plantão. Almeje em torno de 80 palavras no total.]
 </PASSAGEM_PLANTAO>
 `;
     }
@@ -534,7 +631,7 @@ Incorpore de forma corrida o checklist diário realizado nas sessões pertinente
 
         bancoDeDados[leitoAtual].relatorioRound = roundTexto;
         bancoDeDados[leitoAtual].relatorioPlantao = plantaoTexto;
-        salvarMemoria();
+        salvarMemoriaClinica();
 
         document.getElementById("results-area").style.display = "block";
     }
@@ -549,7 +646,7 @@ Incorpore de forma corrida o checklist diário realizado nas sessões pertinente
         for (const [leitoId, dados] of Object.entries(bancoDeDados)) {
             if (dados.evolvido && dados.relatorioRound) {
                 encontrouDados = true;
-                consolidado += `### LEITO: ${leitoId} ###\n\n`;
+                consolidado += `### LEITO: ${dados.localizacao || leitoId} ###\n\n`;
                 consolidado += "--- ROUND MÉDICO E CRITÉRIOS ---\n";
                 consolidado += dados.relatorioRound + "\n\n";
                 consolidado += "--- PASSAGEM DE PLANTÃO ---\n";
@@ -559,7 +656,7 @@ Incorpore de forma corrida o checklist diário realizado nas sessões pertinente
         }
 
         if (!encontrouDados) {
-            document.getElementById("output-consolidado").innerText = "Nenhum leito foi evolvido ou processado nas últimas 12 horas.";
+            document.getElementById("output-consolidado").innerText = "Nenhum leito foi processado nas últimas 12 horas.";
             document.getElementById("btn-download-consolidado").style.display = "none";
         } else {
             document.getElementById("output-consolidado").innerText = consolidado;
