@@ -304,294 +304,209 @@
 </div>
 
 <script>
-/* =========================================================================
-   CONFIGURAÇÃO — AJUSTE AQUI conforme o seu Cloudflare Worker / NVIDIA NIM
-   ========================================================================= */
-const CONFIG = {
-  // URL do seu Worker-proxy (a chave NVIDIA fica oculta no Worker, nunca aqui).
-  proxyUrl: "https://nvidia-api-proxy.chapermann.workers.dev/",
-  // Slug do modelo na NVIDIA NIM. Confirme se seu Worker usa/repassa este campo
-  // ou se o modelo já está fixado no próprio Worker (nesse caso este valor é ignorado).
-  model: "meta/llama-3.3-70b-instruct",
-  temperature: 0.3,
-  maxTokens: 700
-};
+        /* =========================================================================
+           CONFIGURAÇÃO — AJUSTE AQUI conforme o seu Cloudflare Worker / NVIDIA NIM
+           ========================================================================= */
+        const CONFIG = {
+          // URL do seu Worker-proxy (Atenção: confirme se o nome no painel da Cloudflare é este mesmo)
+          proxyUrl: "https://nvidia-api-proxy.chapermann.workers.dev/",
+          // Modelo clínico de alta performance da Meta / DeepSeek
+          model: "deepseek-ai/deepseek-v4-flash",
+          temperature: 1,
+          maxTokens: 1000, // Reduzido para evitar o Erro 524 de Timeout da Cloudflare
+          systemPrompt: `Você é um assistente de inteligência clínica altamente formal. Sua única função é processar uma evolução médica e gerar um resumo extremamente conciso para passagem de plantão de no máximo 50 palavras, garantindo que o diálogo de transmissão dure menos de 2 minutos.
 
-/* =========================================================================
-   PROMPTS DE SISTEMA POR MÓDULO
-   ========================================================================= */
-const SYSTEM_PROMPTS = {
-  plantao: `Você é um assistente de organização documental para passagem de plantão em ambiente de terapia intensiva/emergência.
-Sua única função é compilar, organizar e resumir as informações fornecidas. Você NUNCA sugere condutas, diagnósticos,
-exames ou tratamentos que não estejam explicitamente mencionados no texto recebido.
+Diretrizes Absolutas:
+1. NUNCA inclua dados que identifiquem nominalmente o paciente, médicos ou equipe.
+2. Comprima e resuma os dados para NO MÁXIMO 50 PALAVRAS no total. Seja extremamente objetivo.
+3. Se o peso não estiver descrito na evolução, assuma obrigatoriamente 75Kg como padrão universal.
+4. Se houver critérios de alta médica da UTI ou Sala Vermelha presentes na evolução, adicione explicitamente a frase exata: "Preenche critérios de alta médica para a enfermaria."
+5. Use linguagem puramente clássica, formal, sem emojis, sem gírias, sem maneirismos. Não sugira nada. Reforce as condutas e pendências imediatas.
+6. Formato de saída estrito em texto plano.`,
+          numVermelha: 11,
+          numTrauma: 6
+        };
 
-Regras obrigatórias:
-1. Nunca registre nomes de pacientes, médicos, ou qualquer dado que identifique pessoas. Refira-se ao paciente apenas pelo leito informado.
-2. Estruture a saída exatamente nestes campos, nesta ordem, com respostas objetivas e diretas (frases curtas, não texto corrido):
-   Leito | Dias de internação | Motivo de internação | Modo ventilatório atual | Estabilidade hemodinâmica |
-   Pontos de atenção | Ação imediata necessária | Pendências | Definição da rotina | Dieta/cirurgia/sangue/urgências |
-   Definição de investimento terapêutico (reanimação em PCR) | Limites de cuidado definidos.
-3. Se o peso não for informado no texto, assuma 75 kg como padrão; não pergunte, apenas utilize esse valor caso seja relevante para algum dado citado.
-4. Use o sexo exatamente como informado no texto; nunca infira.
-5. Se o texto mencionar critérios de alta da UTI/Sala Vermelha, inclua a frase: "Paciente preenche critérios de alta médica para a enfermaria."
-6. Linguagem extremamente formal: sem emojis, sem abreviações coloquiais, sem gírias.
-7. Nunca ofereça sugestão de conduta, diagnóstico ou tratamento que não esteja explicitamente no texto.
-8. Finalize sempre com uma linha "Conduta a definir:" — se houver pendência sem decisão registrada, reforce isso explicitamente; se não houver pendência, escreva "Nenhuma pendência de conduta identificada no texto fornecido."
-9. O resultado deve ser lido em até 2 minutos (aproximadamente 150 a 200 palavras no total), mantendo máxima objetividade.
-10. Se um campo não tiver informação no texto fornecido, escreva "Não informado" — nunca invente dados.`,
+        // Carrega dados existentes do cache local do navegador para evitar perdas acidentais de turnos
+        const dadosLeitos = JSON.parse(localStorage.getItem('handoff_dados_leitos')) || {}; 
+        let leitoAtualAtivo = null;
 
-  rounds: `Você é um assistente de organização documental para discussão de casos em rounds médicos multiprofissionais.
-Sua única função é compilar a evolução do paciente e as decisões tomadas durante o round. Você NUNCA sugere condutas,
-diagnósticos ou tratamentos que não tenham sido explicitamente mencionados no texto ou nas decisões informadas.
+        function inicializarPainel() {
+            const gridVermelha = document.getElementById('grid-vermelha');
+            const gridTrauma = document.getElementById('grid-trauma');
 
-Regras obrigatórias:
-1. Nunca registre nomes de pacientes, médicos, ou qualquer dado que identifique pessoas. Refira-se ao paciente apenas pelo leito informado.
-2. Estruture a saída em duas partes, claramente tituladas:
-   (A) RESUMO CLÍNICO ATUAL — síntese objetiva do estado do paciente a partir da evolução fornecida (máximo 5 frases curtas).
-   (B) CONDUTAS E DECISÕES DO ROUND — lista objetiva de todas as decisões diagnósticas e terapêuticas mencionadas
-       (ex.: ajuste de sedação, redução de FiO2, solicitação de exame, discussão de desmame de ventilação mecânica,
-       coleta de culturas, troca de antibiótico).
-3. Se um problema clínico foi identificado no texto mas não há decisão explícita de conduta para ele, sinalize-o na lista como
-   "Conduta pendente de definição" — nunca preencha essa lacuna com uma sugestão própria.
-4. Se o peso não for informado, assuma 75 kg como padrão; use o sexo exatamente como informado no texto.
-5. Linguagem formal, sem emojis ou gírias, frases curtas e objetivas. Sem texto corrido.`
-};
+            for (let i = 1; i <= CONFIG.numVermelha; i++) {
+                const nome = `Leito Vermelha ${i}`;
+                if (!dadosLeitos[nome]) dadosLeitos[nome] = { evolucao: "", resumo: "", timestamp: "", preenchido: false };
+                gridVermelha.appendChild(criarBotaoLeito(nome));
+            }
 
-/* =========================================================================
-   LEITOS
-   ========================================================================= */
-function buildBeds(prefix, count, roomLabel){
-  return Array.from({length:count}, (_,i)=>({
-    id: `${prefix}${i+1}`,
-    label: `${roomLabel} ${i+1}`
-  }));
-}
-const BED_SETS = {
-  vermelha: buildBeds('V', 11, 'Vermelha'),
-  retaguarda: buildBeds('R', 6, 'Retaguarda')
-};
+            for (let i = 1; i <= CONFIG.numTrauma; i++) {
+                const nome = `Leito Trauma ${i}`;
+                if (!dadosLeitos[nome]) dadosLeitos[nome] = { evolucao: "", resumo: "", timestamp: "", preenchido: false };
+                gridTrauma.appendChild(criarBotaoLeito(nome));
+            }
+            atualizarTextoConsolidado();
+        }
 
-/* =========================================================================
-   ESTADO — apenas em memória, nada é persistido (privacidade)
-   ========================================================================= */
-const state = {
-  plantao: { beds: {}, },
-  rounds:  { beds: {}, }
-};
-['plantao','rounds'].forEach(mod=>{
-  [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(b=>{
-    state[mod].beds[b.id] = { done:false, text:'' };
-  });
-});
+        function criarBotaoLeito(nome) {
+            const card = document.createElement('div');
+            card.className = 'leito-card';
+            card.id = `btn-${nome.replace(/\s+/g, '-')}`;
+            
+            const lampClass = dadosLeitos[nome].preenchido ? 'verde' : 'vermelha';
+            card.innerHTML = `
+                <div class="leito-name">${nome}</div>
+                <span class="lampada ${lampClass}" id="lamp-${nome.replace(/\s+/g, '-')}"></span>
+            `;
+            card.addEventListener('click', () => selecionarLeito(nome));
+            return card;
+        }
 
-/* =========================================================================
-   RENDER DOS GRIDS DE LEITO
-   ========================================================================= */
-function renderGrid(moduleKey, room){
-  const container = document.getElementById(`grid-${moduleKey}-${room}`);
-  container.innerHTML = '';
-  BED_SETS[room].forEach(bed=>{
-    const st = state[moduleKey].beds[bed.id];
-    const btn = document.createElement('button');
-    btn.className = 'bed-card';
-    btn.dataset.module = moduleKey;
-    btn.dataset.bed = bed.id;
-    btn.innerHTML = `
-      <div class="bed-code">${bed.id}</div>
-      <div class="bed-row">
-        <span class="bed-status">${st.done ? 'Registrado' : 'Pendente'}</span>
-        <span class="lamp ${st.done ? 'done' : ''}"></span>
-      </div>`;
-    btn.addEventListener('click', ()=>openModal(moduleKey, bed.id, bed.label));
-    container.appendChild(btn);
-  });
-}
-function renderAllGrids(){
-  renderGrid('plantao','vermelha');
-  renderGrid('plantao','retaguarda');
-  renderGrid('rounds','vermelha');
-  renderGrid('rounds','retaguarda');
-}
-renderAllGrids();
+        function selecionarLeito(nome) {
+            if (leitoAtualAtivo) {
+                const cardAnterior = document.getElementById(`btn-${leitoAtualAtivo.replace(/\s+/g, '-')}`);
+                if (cardAnterior) cardAnterior.classList.remove('active');
+            }
+            leitoAtualAtivo = nome;
+            document.getElementById(`btn-${nome.replace(/\s+/g, '-')}`).classList.add('active');
 
-/* =========================================================================
-   TABS
-   ========================================================================= */
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click', ()=>{
-    if (tab.disabled) return;
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-    const target = tab.dataset.tab;
-    document.querySelectorAll('.module-panel').forEach(p=>{
-      p.hidden = p.dataset.module !== target;
-    });
-  });
-});
+            document.getElementById('work-area').style.display = 'block';
+            document.getElementById('work-leito-title').innerText = `Configurando: ${nome}`;
+            document.getElementById('txt-evolucao').value = dadosLeitos[nome].evolucao;
+            
+            const lampadaWork = document.getElementById('work-lampada');
+            lampadaWork.className = `lampada ${dadosLeitos[nome].preenchido ? 'verde' : 'vermelha'}`;
+            document.getElementById('status-processamento').innerText = "";
+        }
 
-/* default shift labels */
-function nowLabel(){
-  const d = new Date();
-  return d.toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' });
-}
-document.getElementById('shift-plantao').value = `Plantão de ${nowLabel()}`;
-document.getElementById('shift-rounds').value = `Round de ${nowLabel()}`;
+        document.getElementById('btn-processar').addEventListener('click', async () => {
+            if (!leitoAtualAtivo) return;
+            const textoInput = document.getElementById('txt-evolucao').value.trim();
+            const statusText = document.getElementById('status-processamento');
+            const btnProcessar = document.getElementById('btn-processar');
+            const txtEvolucao = document.getElementById('txt-evolucao');
 
-/* =========================================================================
-   MODAL
-   ========================================================================= */
-const modalOverlay = document.getElementById('modalOverlay');
-const modalBedCode = document.getElementById('modalBedCode');
-const modalInput = document.getElementById('modalInput');
-const modalExtraWrap = document.getElementById('modalExtraWrap');
-const modalExtraInput = document.getElementById('modalExtraInput');
-const modalStatus = document.getElementById('modalStatus');
-const modalResultWrap = document.getElementById('modalResultWrap');
-const modalResult = document.getElementById('modalResult');
-const modalProcess = document.getElementById('modalProcess');
-const modalSave = document.getElementById('modalSave');
+            if (!textoInput) {
+                statusText.className = "status-text error";
+                statusText.innerText = "Por favor, cole a evolução médica primeiro.";
+                return;
+            }
 
-let activeModule = null;
-let activeBedId = null;
-let activeBedLabel = null;
+            statusText.className = "status-text processing";
+            statusText.innerText = "IA processando prontuário...";
+            btnProcessar.disabled = true;
+            txtEvolucao.disabled = true;
 
-function openModal(moduleKey, bedId, bedLabel){
-  activeModule = moduleKey;
-  activeBedId = bedId;
-  activeBedLabel = bedLabel;
-  modalBedCode.textContent = `${bedId} · ${bedLabel}`;
-  const existing = state[moduleKey].beds[bedId];
-  modalInput.value = '';
-  modalExtraInput.value = '';
-  modalExtraWrap.hidden = moduleKey !== 'rounds';
-  modalStatus.textContent = '';
-  modalResultWrap.hidden = true;
-  modalResult.value = existing.text || '';
-  if (existing.done) {
-    modalResultWrap.hidden = false;
-    modalResult.value = existing.text;
-  }
-  modalOverlay.hidden = false;
-}
-function closeModal(){
-  modalOverlay.hidden = true;
-}
-document.getElementById('modalClose').addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', (e)=>{ if (e.target === modalOverlay) closeModal(); });
+            try {
+                // CORREÇÃO: Sanitização dinâmica baseada no objeto CONFIG.proxyUrl novo
+                const urlLimpa = CONFIG.proxyUrl.replace(/\/+$/, '') + '/';
+                
+                const response = await fetch(urlLimpa, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: CONFIG.model,
+                        messages: [
+                            { role: "system", content: CONFIG.systemPrompt },
+                            { role: "user", content: `Leito: ${leitoAtualAtivo}\n\nProntuário:\n${textoInput}` }
+                        ],
+                        temperature: CONFIG.temperature,
+                        top_p: 0.95,
+                        max_tokens: CONFIG.maxTokens,
+                        extra_body: { "chat_template_kwargs": { "thinking": true, "reasoning_effort": "high" } },
+                        stream: false
+                    })
+                });
 
-modalProcess.addEventListener('click', async ()=>{
-  const evolucao = modalInput.value.trim();
-  if (!evolucao){
-    modalStatus.textContent = 'Cole a evolução médica antes de processar.';
-    return;
-  }
-  modalProcess.disabled = true;
-  modalStatus.textContent = 'Processando…';
+                if (!response.ok) throw new Error(`Status HTTP: ${response.status}`);
 
-  let userContent = `Leito: ${activeBedId} (${activeBedLabel})\n\nEvolução médica colada:\n${evolucao}`;
-  if (activeModule === 'rounds' && modalExtraInput.value.trim()){
-    userContent += `\n\nDecisões adicionais informadas no round:\n${modalExtraInput.value.trim()}`;
-  }
+                const data = await response.json();
+                
+                let resumoGerado = data.choices[0].message.content.trim();
+                resumoGerado = resumoGerado.replace(/^```[a-zA-Z]*\n([\s\S]*?)\n```$/g, '$1').trim();
 
-  try{
-    const text = await callAI(SYSTEM_PROMPTS[activeModule], userContent);
-    modalResult.value = text;
-    modalResultWrap.hidden = false;
-    modalStatus.textContent = 'Pronto. Revise e salve.';
-  }catch(err){
-    modalStatus.textContent = `Erro ao chamar a API: ${err.message}. Verifique CONFIG.proxyUrl/CONFIG.model no código.`;
-  }finally{
-    modalProcess.disabled = false;
-  }
-});
+                dadosLeitos[leitoAtualAtivo].evolucao = textoInput;
+                dadosLeitos[leitoAtualAtivo].resumo = resumoGerado;
+                dadosLeitos[leitoAtualAtivo].preenchido = true;
+                dadosLeitos[leitoAtualAtivo].timestamp = new Date().toLocaleString('pt-BR');
 
-modalSave.addEventListener('click', ()=>{
-  state[activeModule].beds[activeBedId] = { done:true, text: modalResult.value };
-  renderGrid(activeModule, activeBedId.startsWith('V') ? 'vermelha' : 'retaguarda');
-  updateCompiled(activeModule);
-  closeModal();
-});
+                localStorage.setItem('handoff_dados_leitos', JSON.stringify(dadosLeitos));
 
-/* =========================================================================
-   CHAMADA À API (via Cloudflare Worker proxy)
-   ========================================================================= */
-async function callAI(systemPrompt, userContent){
-  const response = await fetch(CONFIG.proxyUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: CONFIG.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent }
-      ],
-      temperature: CONFIG.temperature,
-      max_tokens: CONFIG.maxTokens
-    })
-  });
-  if (!response.ok){
-    throw new Error(`HTTP ${response.status}`);
-  }
-  const data = await response.json();
-  return data.choices[0].message.content.trim();
-}
+                document.getElementById(`lamp-${leitoAtualAtivo.replace(/\s+/g, '-')}`).className = "lampada verde";
+                document.getElementById('work-lampada').className = "lampada verde";
 
-/* =========================================================================
-   COMPILAÇÃO / EXPORTAÇÃO
-   ========================================================================= */
-function updateCompiled(moduleKey){
-  const shiftLabel = document.getElementById(`shift-${moduleKey}`).value;
-  const lines = [`${moduleKey === 'plantao' ? 'PASSAGEM DE PLANTÃO' : 'REGISTRO DE ROUND'} — ${shiftLabel}`, '='.repeat(60), ''];
-  [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(bed=>{
-    const st = state[moduleKey].beds[bed.id];
-    if (st.done && st.text){
-      lines.push(`--- ${bed.id} · ${bed.label} ---`);
-      lines.push(st.text);
-      lines.push('');
-    }
-  });
-  document.getElementById(`compiled-${moduleKey}`).value = lines.join('\n');
-}
+                statusText.className = "status-text success";
+                statusText.innerText = "Caso integrado com sucesso.";
 
-document.querySelectorAll('[data-copy]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const mod = btn.dataset.copy;
-    const ta = document.getElementById(`compiled-${mod}`);
-    ta.select();
-    document.execCommand('copy');
-    btn.textContent = 'Copiado!';
-    setTimeout(()=>{ btn.textContent = 'Copiar tudo'; }, 1500);
-  });
-});
+                atualizarTextoConsolidado();
 
-document.querySelectorAll('[data-download]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const mod = btn.dataset.download;
-    const content = document.getElementById(`compiled-${mod}`).value || 'Nenhum caso processado ainda.';
-    const blob = new Blob([content], { type:'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
-    a.href = url;
-    a.download = `${mod}-${stamp}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-});
+            } catch (err) {
+                console.error(err);
+                statusText.className = "status-text error";
+                statusText.innerText = "Erro de conexão: Verifique se o link do proxyUrl no código está correto.";
+            } finally {
+                btnProcessar.disabled = false;
+                txtEvolucao.disabled = false;
+            }
+        });
 
-document.querySelectorAll('[data-reset]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const mod = btn.dataset.reset;
-    if (!confirm('Isso vai limpar todos os leitos registrados neste módulo. Confirmar?')) return;
-    [...BED_SETS.vermelha, ...BED_SETS.retaguarda].forEach(bed=>{
-      state[mod].beds[bed.id] = { done:false, text:'' };
-    });
-    renderGrid(mod,'vermelha');
-    renderGrid(mod,'retaguarda');
-    document.getElementById(`compiled-${mod}`).value = '';
-    document.getElementById(`shift-${mod}`).value = `${mod === 'plantao' ? 'Plantão' : 'Round'} de ${nowLabel()}`;
-  });
-});
-</script>
+        document.getElementById('btn-limpar').addEventListener('click', () => {
+            if (!leitoAtualAtivo) return;
+            dadosLeitos[leitoAtualAtivo] = { evolucao: "", resumo: "", timestamp: "", preenchido: false };
+            localStorage.setItem('handoff_dados_leitos', JSON.stringify(dadosLeitos));
+            
+            document.getElementById('txt-evolucao').value = "";
+            document.getElementById(`lamp-${leitoAtualAtivo.replace(/\s+/g, '-')}`).className = "lampada vermelha";
+            document.getElementById('work-lampada').className = "lampada vermelha";
+            document.getElementById('status-processamento').innerText = "";
+            atualizarTextoConsolidado();
+        });
+
+        function atualizarTextoConsolidado() {
+            const outGlobal = document.getElementById('output-global');
+            let txtCompleto = `======================================================================\n`;
+            txtCompleto += `   RELATÓRIO CONSOLIDADO: PASSAGEM DE PLANTÃO\n`;
+            txtCompleto += `   EMISSÃO DA ATA: ${new Date().toLocaleString('pt-BR')}\n`;
+            txtCompleto += `======================================================================\n\n`;
+
+            let ativos = 0;
+            for (const [nomeLeito, dados] of Object.entries(dadosLeitos)) {
+                if (dados.preenchido) {
+                    ativos++;
+                    txtCompleto += `[${dados.timestamp}] - ${nomeLeito.toUpperCase()}\n`;
+                    txtCompleto += `${dados.resumo}\n`;
+                    txtCompleto += `----------------------------------------------------------------------\n\n`;
+                }
+            }
+
+            outGlobal.value = ativos > 0 ? txtCompleto : "";
+        }
+
+        document.getElementById('btn-copiar-tudo').addEventListener('click', () => {
+            const outGlobal = document.getElementById('output-global');
+            if (!outGlobal.value) return alert("Nenhum dado consolidado para copiar.");
+            outGlobal.select();
+            navigator.clipboard.writeText(outGlobal.value);
+            alert("Ata de passagem de plantão copieda para a área de transferência!");
+        });
+
+        document.getElementById('btn-baixar-txt').addEventListener('click', () => {
+            const outGlobal = document.getElementById('output-global').value;
+            if (!outGlobal) return alert("Não há dados estruturados para exportação.");
+            
+            const blob = new Blob([outGlobal], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            const dataFormatada = new Date().toISOString().slice(0,10);
+            link.href = URL.createObjectURL(blob);
+            link.download = `Passagem_Plantao_Consolidada_${dataFormatada}.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        });
+
+        inicializarPainel();
+    </script>
 </body>
 </html>
