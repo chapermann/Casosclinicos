@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão Clínica - Sala Vermelha & Trauma</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --text-main: #1e293b;
+            --border-color: #e2e8f0;
+            --red-light: #ef4444;
+            --green-light: #22c55e;
+            --accent: #0284c7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        h1, h2, h3 {
+            color: #0f172a;
+            margin-top: 0;
+        }
+
+        .sector-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .grid-beds {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 35px;
+        }
+
+        .btn-bed {
+            padding: 15px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .btn-bed:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-bed.active {
+            border-color: var(--accent);
+            background-color: #f0f9ff;
+        }
+
+        .status-light {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .status-red { background-color: var(--red-light); box-shadow: 0 0 8px var(--red-light); }
+        .status-green { background-color: var(--green-light); box-shadow: 0 0 8px var(--green-light); }
+
+        .workspace {
+            display: none;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .section-checklist {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .chk-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chk-item input {
+            cursor: pointer;
+        }
+
+        .btn-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #0369a1;
+        }
+
+        .btn-download {
+            background-color: #475569;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover {
+            background-color: #334155;
+        }
+
+        .output-box {
+            margin-top: 25px;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.95rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tab-compiled {
+            margin-top: 40px;
+            border-top: 3px solid #cbd5e1;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Gestão de Prontuários e Passagem de Caso</h1>
+        <p>Geração automatizada de Round Médico e Passagem de Plantão estruturada.</p>
+    </header>
+
+    <div class="sector-title">Sala Vermelha</div>
+    <div class="grid-beds" id="sector-red"></div>
+
+    <div class="sector-title">Retaguarda do Trauma</div>
+    <div class="grid-beds" id="sector-trauma"></div>
+
+    <div class="workspace" id="workspace">
+        <h2 id="workspace-title">Leito X</h2>
+        
+        <div class="form-group">
+            <label for="input-evolution">Cole aqui a evolução médica de hoje:</label>
+            <textarea id="input-evolution" placeholder="Insira a evolução médica completa sem dados identificadores explícitos..."></textarea>
+        </div>
+
+        <div class="section-checklist">
+            <h3>MODELO_CHECKLIST_MEDICO.md</h3>
+            <div class="checklist-grid" id="checklist-container"></div>
+        </div>
+
+        <div class="section-checklist" style="background-color: #e0f2fe;">
+            <h3>MODELO_ALTA_MEDICA.md (Critérios de Alta para Enfermaria de Clínica Médica)</h3>
+            <div class="checklist-grid" id="alta-container"></div>
+        </div>
+
+        <button class="btn-action" onclick="processarDadosLeito()">Processar e Gerar Relatórios</button>
+
+        <div id="loading" style="display:none; margin-top: 15px; font-weight: bold; color: var(--accent);">Processando com inteligência artificial...</div>
+
+        <div id="results-area" style="display:none;">
+            <h3>MODELO_ROUND_MEDICO.txt</h3>
+            <div class="output-box" id="output-round"></div>
+            <button class="btn-download" onclick="downloadTxt('round')">Download Round (.txt)</button>
+
+            <h3>MODELO_PASSAGEM_PLANTAO.txt</h3>
+            <div class="output-box" id="output-plantao"></div>
+            <button class="btn-download" onclick="downloadTxt('plantao')">Download Passagem (.txt)</button>
+        </div>
+    </div>
+
+    <div class="tab-compiled">
+        <h2>Consolidação de Evoluções da Unidade</h2>
+        <p>Abaixo você pode gerar e compilar todos os leitos alimentados nas últimas 12 horas.</p>
+        <button class="btn-action" style="background-color: #10b981;" onclick="renderizarConsolidado()">Gerar Relatório Consolidado</button>
+        <div class="output-box" id="output-consolidado" style="background: #1e293b;">Nenhum relatório compilado até o momento.</div>
+        <button class="btn-download" id="btn-download-consolidado" style="display:none;" onclick="downloadTxt('consolidado')">Download Consolidado (.txt)</button>
+    </div>
+</div>
+
+<script>
+    const CONFIG = {
+        PROXY_URL: "https://nvidia-api-proxy.chapermann.workers.dev/v1/chat/completions",
+        MODEL: "openai/gpt-oss-120b",
+        MEMORY_TIMEOUT: 12 * 60 * 60 * 1000 // 12 horas
+    };
+
+    const CHECKLIST_ITEMS = [
+        { id: "tvp", text: "Profilaxia TVP" },
+        { id: "ulcera", text: "Profilaxia úlcera (Gástrica/pele)" },
+        { id: "delirium", text: "Profilaxia Delirium" },
+        { id: "dieta", text: "Paciente recebendo Dieta" },
+        { id: "atb", text: "Antibioticoterapia" },
+        { id: "culturas", text: "Culturas coletadas" },
+        { id: "eliminaçoes", text: "Eliminações fisiológicas ocorridas" },
+        { id: "enfermagem", text: "Checar prescrições/anotações com enfermagem" },
+        { id: "monitorizaçao", text: "Monitorização completa estabelecida" },
+        { id: "vm", text: "Em ventilação mecânica com parâmetros anotados" },
+        { id: "banho", text: "Acompanhou banho / Avaliou lesões de pele" },
+        { id: "dialise", text: "Em diálise ativa" },
+        { id: "dispositivos", text: "Retirada/revisão de dispositivos (CVD, PVP, drenos)" },
+        { id: "fisioterapia", text: "Fisioterapia acompanhando" },
+        { id: "fono", text: "Fonoaudiologia acompanhando" },
+        { id: "buco", text: "Avaliação da Odontologia / Bucomaxilofacial" },
+        { id: "foto", text: "Registro fotográfico de lesões realizado" },
+        { id: "especialidades", text: "Acompanhado por outras especialidades" },
+        { id: "mobilizaçao", text: "Mobilização no leito realizada" },
+        { id: "falta_med", text: "ALGUMA MEDICAÇÃO EM FALTA (inst. ou ind.)" },
+        { id: "previsao_alta", text: "Previsão de alta estabelecida" },
+        { id: "requisito_alta", text: "O que falta para alta médica mapeado" }
+    ];
+
+    const ALTA_ITEMS = [
+        { id: "c1", text: "1 - Paciente encontra-se de ALTA pelas especialidades cirúrgicas? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c2", text: "2 - Paciente não apresenta nenhuma condição cirúrgica no momento? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c3", text: "3 - Paciente encontra-se em ar ambiente? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c4", text: "4 - Paciente com necessidade de baixo fluxo de O2 (até 5L/min)? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c5", text: "5 - Paciente encontra-se lúcido? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c6", text: "6 - Se não lúcido, encontra-se hemodinamicamente estável? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c7", text: "7 - Paciente encontra-se sem queixas álgicas? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c8", text: "8 - Recebeu alta recente ou esteve internado na clínica médica? (Sim=-1/Não=1)", val: 1, inv: true },
+        { id: "c9", text: "9 - Paciente tem doença clínica descompensada? (Sim=1/Não=-1)", val: 1, inv: false },
+        { id: "c10", text: "10 - Tem doença de especialidade presente no Hospital? (Sim=1/Não=-1)", val: 1, inv: false }
+    ];
+
+    let bancoDeDados = {};
+    let leitoAtual = null;
+
+    function inicializarApp() {
+        carregarMemoria();
+        renderizarLeitos("Sala Vermelha", 11, "sector-red", "SV");
+        renderizarLeitos("Retaguarda do Trauma", 6, "sector-trauma", "RT");
+        renderizarFormularios();
+    }
+
+    function carregarMemoria() {
+        const dadosSalvos = localStorage.getItem("app_med_data");
+        const timestamp = localStorage.getItem("app_med_timestamp");
+        
+        if (dadosSalvos && timestamp) {
+            if (Date.now() - parseInt(timestamp) < CONFIG.MEMORY_TIMEOUT) {
+                bancoDeDados = JSON.parse(dadosSalvos);
+            } else {
+                localStorage.removeItem("app_med_data");
+                localStorage.removeItem("app_med_timestamp");
+            }
+        }
+    }
+
+    function salvarMemoria() {
+        localStorage.setItem("app_med_data", JSON.stringify(bancoDeDados));
+        localStorage.setItem("app_med_timestamp", Date.now().toString());
+    }
+
+    function renderizarLeitos(setor, total, containerId, prefixo) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+        for (let i = 1; i <= total; i++) {
+            const idLeito = `${prefixo}-${i}`;
+            const dadosLeito = bancoDeDados[idLeito] || {};
+            const temEvolucao = dadosLeito.evolvido ? "status-green" : "status-red";
+            
+            const btn = document.createElement("button");
+            btn.className = "btn-bed";
+            btn.id = `btn-${idLeito}`;
+            btn.onclick = () => carregarLeito(idLeito, setor, i);
+            btn.innerHTML = `
+                <span>Leito ${i}</span>
+                <div class="status-light ${temEvolucao}" id="light-${idLeito}"></div>
+            `;
+            container.appendChild(btn);
+        }
+    }
+
+    function renderizarFormularios() {
+        const chkContainer = document.getElementById("checklist-container");
+        chkContainer.innerHTML = CHECKLIST_ITEMS.map(item => `
+            <div class="chk-item">
+                <input type="checkbox" id="chk-${item.id}">
+                <label for="chk-${item.id}" style="margin:0; font-weight:normal; font-size:0.9rem;">${item.text}</label>
+            </div>
+        `).join("");
+
+        const altaContainer = document.getElementById("alta-container");
+        altaContainer.innerHTML = ALTA_ITEMS.map(item => `
+            <div class="chk-item">
+                <input type="checkbox" id="alta-${item.id}">
+                <label for="alta-${item.id}" style="margin:0; font-weight:normal; font-size:0.85rem;">${item.text}</label>
+            </div>
+        `).join("");
+    }
+
+    function carregarLeito(idLeito, setor, numero) {
+        leitoAtual = idLeito;
+        document.querySelectorAll(".btn-bed").forEach(b => b.classList.remove("active"));
+        document.getElementById(`btn-${idLeito}`).classList.add("active");
+        
+        document.getElementById("workspace-title").innerText = `${setor} - Leito ${numero}`;
+        document.getElementById("workspace").style.display = "block";
+        document.getElementById("results-area").style.display = "none";
+
+        const dados = bancoDeDados[idLeito] || {};
+        document.getElementById("input-evolution").value = dados.evolucaoBruta || "";
+
+        CHECKLIST_ITEMS.forEach(item => {
+            document.getElementById(`chk-${item.id}`).checked = dados.checklist ? !!dados.checklist[item.id] : false;
+        });
+
+        ALTA_ITEMS.forEach(item => {
+            document.getElementById(`alta-${item.id}`).checked = dados.altaCheck ? !!dados.altaCheck[item.id] : false;
+        });
+    }
+
+    function calcularCriteriosAlta() {
+        let pontuacao = 0;
+        ALTA_ITEMS.forEach(item => {
+            const checked = document.getElementById(`alta-${item.id}`).checked;
+            if (item.inv) {
+                pontuacao += checked ? -1 : 1;
+            } else {
+                pontuacao += checked ? 1 : -1;
+            }
+        });
+        return pontuacao;
+    }
+
+    async function processarDadosLeito() {
+        if (!leitoAtual) return;
+
+        const evolucaoTexto = document.getElementById("input-evolution").value.trim();
+        if (!evolucaoTexto) {
+            alert("Por favor, preencha a evolução médica de hoje.");
+            return;
+        }
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("results-area").style.display = "none";
+
+        const checklistSalvo = {};
+        CHECKLIST_ITEMS.forEach(item => {
+            checklistSalvo[item.id] = document.getElementById(`chk-${item.id}`).checked;
+        });
+
+        const altaSalvo = {};
+        ALTA_ITEMS.forEach(item => {
+            altaSalvo[item.id] = document.getElementById(`alta-${item.id}`).checked;
+        });
+
+        const pontuacaoAlta = calcularCriteriosAlta();
+
+        if (!bancoDeDados[leitoAtual]) bancoDeDados[leitoAtual] = {};
+        bancoDeDados[leitoAtual].evolucaoBruta = evolucaoTexto;
+        bancoDeDados[leitoAtual].checklist = checklistSalvo;
+        bancoDeDados[leitoAtual].altaCheck = altaSalvo;
+        bancoDeDados[leitoAtual].pontuacaoAlta = pontuacaoAlta;
+
+        const promptDeProcessamento = construirPromptIA(evolucaoTexto, checklistSalvo, altaSalvo, pontuacaoAlta);
+
+        try {
+            const response = await fetch(CONFIG.PROXY_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: CONFIG.MODEL,
+                    messages: [
+                        {
+                            role: "system",
+                            content: "Voce e um assistente medico especialista em compilaçao de prontuarios estruturados. Voce trabalha exclusivamente gerando texto corrido tradicional, sem tabelas, sem caracteres especiais ou formatadores markdown complexos. Siga todas as instruçoes de anonimizaçao e formataçao formal rigidamente."
+                        },
+                        {
+                            role: "user",
+                            content: promptDeProcessamento
+                        }
+                    ],
+                    temperature: 0.1
+                })
+            });
+
+            if (!response.ok) throw new Error("Erro na comunicaçao com o provedor de IA.");
+
+            const data = await response.json();
+            const outputCompleto = data.choices[0].message.content;
+
+            separarOutputs(outputCompleto);
+
+            bancoDeDados[leitoAtual].evolvido = true;
+            document.getElementById(`light-${leitoAtual}`).className = "status-light status-green";
+            salvarMemoria();
+
+        } catch (error) {
+            alert("Erro ao processar inteligência artificial: " + error.message);
+        } finally {
+            document.getElementById("loading").style.display = "none";
+        }
+    }
+
+    function construirPromptIA(evolucao, chk, alta, pontuacao) {
+        let checklistTexto = "CHECKLIST DIARIO REALIZADO PELO PLANTONISTA:\n";
+        CHECKLIST_ITEMS.forEach(item => {
+            checklistTexto += `- ${item.text}: ${chk[item.id] ? "SIM" : "NAO"}\n`;
+        });
+
+        let altaTexto = `PONTUACAO DO CRITERIO DE ALTA PARA ENFERMARIA DE CLINICA MEDICA: ${pontuacao} PONTOS\n`;
+        if (pontuacao < 5) altaTexto += "Resultado: Paciente provavelmente nao esta de alta para enfermaria de clinica medica.\n";
+        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica, reavaliar cuidadosamente.\n";
+        else altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica.\n";
+
+        return `
+Você deve ler a evolução médica abaixo e gerar DOIS relatórios distintos em formato de texto plano e corrido (sem colunas, sem tabelas e sem tabulações).
+
+DIRETRIZES IMPORTANTES:
+1. ANONIMIZAÇÃO COMPLETA: Substitua nomes por abreviações (Ex: Paulo da Silva Almeida Junior vira PSAJ). Delete CPFs, identidades ou registros numéricos pessoais.
+2. PESO PADRÃO: Se não houver peso descrito na evolução, assuma obrigatoriamente 75Kg como peso padrão.
+3. FORMAÇÃO TEXTUAL: Use português formal e técnico. Evite abreviações não médicas, emojis ou preciosismo. Use quebras de linha normais para separar as sessões. Não use caracteres ASCII desenhados.
+4. TRADUÇÃO DE TERMOS: Consolide IH (Data de internação), TC (Tomografia), PO (Pós-operatório), NC (Neurocirurgia), CG (Cirurgia Geral). Sinais normais em exames de imagem resuma como normais.
+
+--- EVOLUÇÃO MÉDICA DE HOJE INSERIDA ---
+${evolucao}
+
+--- DADOS ADICIONAIS DO FORMULÁRIO ---
+${checklistTexto}
+${altaTexto}
+
+Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes exatamente assim:
+
+<ROUND_MEDICO>
+[Gere aqui o MODELO_ROUND_MEDICO seguindo esta estrutura sequencial linear:
+1. Identificação (Iniciais, idade, sexo, procedência)
+2. Data e Tempo de Internação, Motivo da Internação
+3. Situação cirúrgica (Se PO, tempo decorrido, procedimento)
+4. Comorbidades e condições associadas (histórico, medicações de uso contínuo)
+5. Situação clínica atual (Sedação/RASS, Drogas em infusão contínua, Invasões, Sinais vitais atuais, Ventilação mecânica se houver, Estado neurológico, Exame físico relevante)
+6. Gasometria arterial (data, parâmetros, pH, PaCO2, PaO2, HCO3, BE, lactato)
+7. Exames de imagem (principais achados resumidos)
+8. Exames laboratoriais relevantes
+9. Antibióticos em uso (nome, dose, tempo de uso)
+10. Impressão do caso (sumário)
+11. Condutas e rotina pactuadas
+Incorpore de forma corrida o checklist diário realizado nas sessões pertinentes e adicione ao final uma sessão específica intitulada: Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
+</ROUND_MEDICO>
+
+<PASSAGEM_PLANTAO>
+[Gere aqui o MODELO_PASSAGEM_PLANTAO: Um texto extremamente conciso e objetivo com em torno de 80 palavras focado puramente na lista de problemas ativos e nas resoluções ou pendências imediatas para o próximo plantão.]
+</PASSAGEM_PLANTAO>
+`;
+    }
+
+    function separarOutputs(textoCompleto) {
+        const roundMatch = textoCompleto.match(/<ROUND_MEDICO>([\s\S]*?)<\/ROUND_MEDICO>/);
+        const plantaoMatch = textoCompleto.match(/<PASSAGEM_PLANTAO>([\s\S]*?)<\/PASSAGEM_PLANTAO>/);
+
+        const roundTexto = roundMatch ? roundMatch[1].trim() : "Erro ao extrair o Round Médico.";
+        const plantaoTexto = plantaoMatch ? plantaoMatch[1].trim() : "Erro ao extrair a Passagem de Plantão.";
+
+        document.getElementById("output-round").innerText = roundTexto;
+        document.getElementById("output-plantao").innerText = plantaoTexto;
+
+        bancoDeDados[leitoAtual].relatorioRound = roundTexto;
+        bancoDeDados[leitoAtual].relatorioPlantao = plantaoTexto;
+        salvarMemoria();
+
+        document.getElementById("results-area").style.display = "block";
+    }
+
+    function renderizarConsolidado() {
+        let consolidado = "========================================================\n";
+        consolidado += "      RELATÓRIO CONSOLIDADO DA UNIDADE (ÚLTIMAS 12H)     \n";
+        consolidado += "========================================================\n\n";
+        
+        let encontrouDados = false;
+
+        for (const [leitoId, dados] of Object.entries(bancoDeDados)) {
+            if (dados.evolvido && dados.relatorioRound) {
+                encontrouDados = true;
+                consolidado += `### LEITO: ${leitoId} ###\n\n`;
+                consolidado += "--- ROUND MÉDICO E CRITÉRIOS ---\n";
+                consolidado += dados.relatorioRound + "\n\n";
+                consolidado += "--- PASSAGEM DE PLANTÃO ---\n";
+                consolidado += dados.relatorioPlantao + "\n";
+                consolidado += "--------------------------------------------------------\n\n";
+            }
+        }
+
+        if (!encontrouDados) {
+            document.getElementById("output-consolidado").innerText = "Nenhum leito foi evolvido ou processado nas últimas 12 horas.";
+            document.getElementById("btn-download-consolidado").style.display = "none";
+        } else {
+            document.getElementById("output-consolidado").innerText = consolidado;
+            document.getElementById("btn-download-consolidado").style.display = "inline-block";
+            bancoDeDados["consolidado_texto"] = consolidado;
+        }
+    }
+
+    function downloadTxt(tipo) {
+        let texto = "";
+        let nomeArquivo = "";
+
+        if (tipo === "round" && leitoAtual) {
+            texto = bancoDeDados[leitoAtual].relatorioRound;
+            nomeArquivo = `ROUND_${leitoAtual}.txt`;
+        } else if (tipo === "plantao" && leitoAtual) {
+            texto = bancoDeDados[leitoAtual].relatorioPlantao;
+            nomeArquivo = `PASSAGEM_${leitoAtual}.txt`;
+        } else if (tipo === "consolidado") {
+            texto = bancoDeDados["consolidado_texto"];
+            nomeArquivo = "CONSOLIDADO_UNIDADE.txt";
+        }
+
+        if (!texto) return;
+
+        const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = nomeArquivo;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    window.onload = inicializarApp;
+</script>
+
+</body>
+</html>
