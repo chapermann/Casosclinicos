@@ -288,7 +288,6 @@
         MEMORY_TIMEOUT: 12 * 60 * 60 * 1000 
     };
 
-    // Valores padrão iniciais caso o sistema seja aberto pela primeira vez
     const DEFAULT_CHECKLIST = [
         "Profilaxia TVP", "Profilaxia úlcera (Gastrica/pele)", "Profilaxia Delirium", "Paciente recebendo Dieta",
         "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem e anotações da enfermagem.",
@@ -312,7 +311,7 @@
         "10 - Paciente tem doença clínica de especialidade que tenha no Hospital?"
     ];
 
-    let checklistItens Atuais = [];
+    let checklistItensAtuais = [];
     let altaItensAtuais = [];
     let bancoDeDados = {};
     let leitoAtual = null;
@@ -561,6 +560,7 @@
         } catch (error) {
             alert("Erro durante o processamento: " + error.message);
         } finally {
+            document.getElementById("loading").style.none = "none";
             document.getElementById("loading").style.display = "none";
         }
     }
@@ -574,7 +574,7 @@
 
         let altaTexto = `PONTUACAO DO CRITERIO DE ALTA PARA ENFERMARIA DE CLINICA MEDICA: ${pontuacao} PONTOS\n`;
         if (pontuacao < 5) altaTexto += "Resultado: Paciente provavelmente nao esta de alta para enfermaria de clinica medica.\n";
-        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica, reavaliar cuidadosamente.\n";
+        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a neuromatologia/enfermaria de clinica medica, reavaliar cuidadosamente.\n";
         else altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica.\n";
 
         return `
