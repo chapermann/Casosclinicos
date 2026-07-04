@@ -560,7 +560,6 @@
         } catch (error) {
             alert("Erro durante o processamento: " + error.message);
         } finally {
-            document.getElementById("loading").style.none = "none";
             document.getElementById("loading").style.display = "none";
         }
     }
@@ -574,7 +573,7 @@
 
         let altaTexto = `PONTUACAO DO CRITERIO DE ALTA PARA ENFERMARIA DE CLINICA MEDICA: ${pontuacao} PONTOS\n`;
         if (pontuacao < 5) altaTexto += "Resultado: Paciente provavelmente nao esta de alta para enfermaria de clinica medica.\n";
-        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a neuromatologia/enfermaria de clinica medica, reavaliar cuidadosamente.\n";
+        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica, reavaliar cuidadosamente.\n";
         else altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica.\n";
 
         return `
