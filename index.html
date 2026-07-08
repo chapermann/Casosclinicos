@@ -291,7 +291,7 @@
 
     const DEFAULT_CHECKLIST = [
         "Profilaxia TVP", "Profilaxia úlcera (Gastrica/pele)", "Profilaxia Delirium", "Paciente recebendo Dieta",
-        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem and anotações da enfermagem.",
+        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem e anotações da enfermagem.",
         "Monitorização completa?", "Em ventilação mecânica? Anotou os parâmetros ventilatórios?", "Acompanhou o banho do paciente? Lesões de pele?",
         "Em diálise? Se sim qual programa ou tratamento indicado?", "Retirada de dispositivos? CVD? PVP? Drenos?", "Fisioterapia",
         "Fonoaudiologia acompanhando?", "Necessidade de avaliação do dentista / bucomaxilofacial?", "Registro fotográfico de lesões?",
@@ -437,7 +437,7 @@
             const btn = document.createElement("button");
             btn.className = "btn-bed";
             btn.id = `btn-${idLeito}`;
-            btn.onclick = () => carregarLeito(idLeito, sector, i, prefixo);
+            btn.onclick = () => carregarLeito(idLeito, setor, i, prefixo);
             btn.innerHTML = `
                 <span>Leito ${i}</span>
                 <div class="status-light ${temEvolucao}" id="light-${idLeito}"></div>
@@ -627,7 +627,7 @@ Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes 
 7. Exames de imagem (resuma laudos longos focado nos dados cruciais; achados normais descreva como normais)
 8. Exames laboratoriais relevantes
 9. Antibióticos em uso (nome, dose, tempo de uso)
-10. Impressão do caso (sumário)
+10. Impression do caso (sumário)
 11. Condutas e rotina pactuadas
 Incorpore o checklist diário nas sessões pertinentes e adicione ao final os Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
 </ROUND_MEDICO>
