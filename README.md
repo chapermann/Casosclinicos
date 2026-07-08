@@ -1,106 +1,82 @@
-# 🩺 Organizador de Round e Casos Clínicos — Projeto Prompts Poderosos
+# 🩺 Painel de Gestão Clínica — Projeto Prompts Poderosos
 
-[![GitHub](https://img.shields.io/badge/GitHub-chapermann-emerald?style=flat-square&logo=github)](https://github.com/chapermann)
-[![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-6-purple?style=flat-square&logo=vite)](https://vitejs.dev)
-[![Gemini AI](https://img.shields.io/badge/Gemini_AI-3.5_Flash-orange?style=flat-square&logo=google)](https://ai.google.dev/)
+[![GitHub](https://img.shields.io/badge/GitHub-chapermann-blue?style=flat-square&logo=github)](https://github.com/chapermann)
+[![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow?style=flat-square&logo=javascript)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare)](https://workers.cloudflare.com/)
+[![NVIDIA](https://img.shields.io/badge/NVIDIA-AI_Inference-green?style=flat-square&logo=nvidia)](https://build.nvidia.com/)
 
-Este repositório contém a ferramenta profissional para estruturação e organização de prontuários médicos desenvolvida para a conta de GitHub [chapermann](https://github.com/chapermann). 
+Ferramenta web especializada na estruturação de prontuários médicos, auditoria clínica automatizada e otimização da comunicação médica interna para unidades de emergência e terapia intensiva. 
 
-O sistema foi desenhado especificamente sob o escopo do **Projeto Prompts Poderosos** para mitigar de forma automatizada e metódica os tradicionais entraves do ambiente hospitalar:
-1. Passagem de caso clínico no round de médicos e médicos residentes.
-2. Troca de informações clínicas no plantão de entrada e saída.
-3. Padronização e organização de notas desestruturadas no prontuário eletrônico.
-4. Triagem e entrega de dados sumarizados de alta relevância para a diretoria do hospital.
+O sistema foi desenhado especificamente sob o escopo do **Projeto Prompts Poderosos** para mitigar de forma automatizada e metódica os tradicionais entraves do ambiente hospitalar: prontuários mal escritos, perda de informações na transição de turnos e falta de padronização.
 
 ---
 
 ## 🚀 Funcionalidades Principais
 
-* **Evolução de Caso para Round Diário (11 Tópicos)**: Transcreve rascunhos verbais desordenados em uma estrutura clínica extremamente formal contendo identificação, motivo de internação, condições cirúrgicas, comorbidades, situação atual (sedativos, bombas, ventilação mecânica, exame físico), gasometria arterial, exames laboratoriais/imagem, antibiótico em uso (com cálculo de tempo de uso), sumário de diagnóstico e condutas médicas.
-* **Calculadora de Score de Internação em Enfermaria**: Automatiza o cálculo das 10 questões de transferência do paciente para a enfermaria clínica, aplicando acréscimo estatístico ou penalidades rígidas de pontos. O sistema permite ao médico alternar livremente as respostas em tempo real, recalculando a situação instantaneamente.
-* **Detecção de Associações Clínicas Saborosas (Regra 10)**: Aponta correlações de sinais e sintomas não explicitamente elencados pela conduta da equipe médica, sem intervir diretamente em receituário ativo de acordo com as normas médicas.
-* **Design Fiel e Confiabilidade Sem Cache (Estritamente Stateless - Regra 1)**: Não armazena nem registra dados sensíveis de pacientes ou profissionais na memória, garantindo total conformidade com a LGPD e privacidade do paciente do hospital.
-* **Uso Universal TXT (Regra 4)**: De acordo com este regulamento protocolar do Centro Médico, o sumário estruturado é exibido estritamente em bloco de texto puro corrida TXT. Sem colunas ricas, sem tabelas e sem arquivos de download ricos (como PDF, DOCX/DOC), garantindo 100% de aceitação em qualquer editor simplificado de prontuários médicos estaduais.
+* **Painel Visual de Ocupação**: Monitoramento em tempo real de **11 leitos de Sala Vermelha (SV)** e **6 leitos de Retaguarda do Trauma (RT)**. Botões com luzes indicadoras sinalizam visualmente se a evolução médica diária daquele leito já foi processada (Verde) ou está pendente (Vermelho).
+* **Evolução Estruturada para Round Médico**: Lê anotações médicas desorganizadas e gera o `MODELO_ROUND_MEDICO.txt` seguindo rigorosamente uma sequência linear de 11 tópicos formais (Identificação, Tempo de Internação, Situação Cirúrgica, Comorbidades, Situação Clínica Atual, Gasometria, Imagem, Laboratório, Antibioticoterapia com tempo de uso, Impressão e Condutas).
+* **Passagem de Plantão Ultra Objetiva**: Cria o `MODELO_PASSAGEM_PLANTAO.txt`, um texto fluido focado na comunicação ágil de médico para médico, limitado rigidamente entre **100 e 120 palavras**[cite: 2]. Inicia obrigatoriamente padronizado com: `Iniciais do Nome, XX anos, Localização (SV/RT Leito X).`[cite: 2].
+* **Tradução de Abreviações e Termos Técnicos**: Possui uma inteligência clínica capaz de ler, interpretar e expandir automaticamente dezenas de abreviações médicas comuns (ex: CNO2, PC/PS, VIG, RNC, TOT, IH) para garantir clareza documental[cite: 1, 2].
+* **Conversão Ética para CID-10**: Atendendo rigidamente ao Código de Ética Médica e à proteção de dados, diagnósticos sensíveis ou estigmatizantes (como HIV, AIDS, Câncer, Tuberculose ou tentativas de auto-extermínio) são automaticamente convertidos para seus respectivos códigos de CID-10 no texto final[cite: 2].
+* **Calculadora Automática de Alta para Enfermaria**: Avalia em tempo real 10 critérios clínicos de elegibilidade para transferência do paciente para a enfermaria de clínica médica, aplicando scores positivos ou penalidades matemáticas de forma transparente.
+* **Gerenciador Dinâmico de Modelos (.md)**: Aba de configurações em tela que permite à chefia ou equipe médica editar, incluir ou remover perguntas do Checklist Diário e dos Critérios de Alta sem precisar alterar uma única linha de código fonte.
+* **Privacidade Absoluta (Stateless - Regra 1)**: O sistema não armazena dados em servidores externos ou banco de dados em nuvem. As informações ficam salvas apenas na memória temporária do navegador (`localStorage`) e expiram/são destruídas automaticamente a cada 12 horas.
+* **Saída Exclusiva em Texto Corrido (TXT - Regra 4)**: Resultados exibidos e baixados puramente em formato `.txt` linear simples. Sem tabelas, sem colunas e sem caracteres especiais ASCII, garantindo 100% de compatibilidade com qualquer editor rudimentar de prontuário eletrônico hospitalar.
 
 ---
 
 ## 🧮 Tabela de Pontuação para Alta (Cli. Médica)
 
-O robô sugere preliminarmente e calcula em tempo real os seguintes critérios:
+O sistema calcula automaticamente o score com base nas respostas marcadas no formulário (`[ ] sim` / `[ ] não`):
 
 | ID | Pergunta Clínica | Se Sim | Se Não |
 |---|---|---|---|
-| **1** | Alta pelas especialidades cirúrgicas? | `+1 ponto` | `-1 ponto` |
-| **2** | Ausência de condições potencialmente cirúrgicas? | `+1 ponto` | `-1 ponto` |
-| **3** | Encontra-se respirando em ar ambiente? | `+1 ponto` | `-1 ponto` |
-| **4** | Suplementação de oxigênio em baixíssimo fluxo? | `+1 ponto` | `-2 pontos` |
-| **5** | Encontra-se completamente lúcido? | `+1 ponto` | `-1 ponto` |
-| **6** | Se não lúcido, encontra-se estável hemodinamicamente? | `+1 ponto` | `-2 pontos` |
-| **7** | Encontra-se totalmente sem queixas álgicas hoje? | `+1 ponto` | `-1 ponto` |
-| **8** | Alta recente ou já esteve na clínica médica? | `+2 pontos` | `-1 ponto` |
-| **9** | Doença clínica crônica atual compensada? | `+1 ponto` | `-1 ponto` |
-| **10** | Doença requer atenção de alguma especialidade? | `+1 ponto` | `-2 pontos` |
+| **1** | Paciente encontra-se de ALTA pelas especialidades cirúrgicas? | `+1 ponto` | `-1 ponto` |
+| **2** | Paciente não apresenta nenhuma condição cirúrgica ou potencialmente cirúrgica no momento? | `+1 ponto` | `-1 ponto` |
+| **3** | Paciente encontra-se em ar ambiente? | `+1 ponto` | `-1 ponto` |
+| **4** | Paciente que precisa de oxigênio, necessita de pouco fluxo (até 5L/min) ou de pouca suplementação? | `+1 ponto` | `-1 ponto` |
+| **5** | Paciente encontra-se lúcido? | `+1 ponto` | `-1 ponto` |
+| **6** | Paciente que não encontra-se lúcido, encontra-se hemodinamicamente estável? | `+1 ponto` | `-1 ponto` |
+| **7** | Paciente encontra-se nesse momento sem queixas álgicas? | `+1 ponto` | `-1 ponto` |
+| **8** | Paciente recebeu alta recentemente ou esteve internado na clínica médica? | `-1 ponto` | `+1 ponto` |
+| **9** | Paciente tem doença clínica descompensada? | `+1 ponto` | `-1 ponto` |
+| **10** | Paciente tem doença clínica de especialidade que tenha no Hospital? | `+1 ponto` | `-1 ponto` |
 
 ### Análise Preliminar do Resultado:
-* **Pontuação < 5**: Não está em condições de alta hospitalar enfermaria.
-* **Pontuação de 5 a 8**: Provavelmente ainda não elegível para alta de enfermaria.
-* **Pontuação de 9 a 10**: Provável indicação de alta médica.
-* **Pontuação > 10**: Alta médica segura e imediata para Enfermaria de Clínica Médica!
+* **Pontuação < 5**: Provavelmente não está de alta para enfermaria de clínica médica.
+* **Pontuação de 5 a 8**: Provavelmente está de alta para a enfermaria de clínica médica, reavaliar cuidadosamente.
+* **Pontuação > 8**: Provavelmente está de alta para a enfermaria de clínica médica.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Arquitetura e Tecnologias
 
-O projeto conta com uma arquitetura robusta Full-Stack:
-1. **Front-end**: React 19 executado via Vite 6, estilizado com Tailwind CSS v4, animado com micro-interações via Framer Motion, e iconografia por Lucide React.
-2. **Back-end Server**: Servidor Express.js rodando em Node.js com TypeScript, gerenciado na fase de desenvolvimento por `tsx`.
-3. **Mecanismo de Inteligência Artificial**: Chamadas tratadas no servidor com o SDK oficial `@google/genai` utilizando o modelo `gemini-3.5-flash` para analisar as anotações médicas cruas e predeterminar os formulários de forma rápida e segura.
+Buscando máxima velocidade de carregamento, simplicidade de uso e facilidade de implantação em infraestruturas hospitalares limitadas, o projeto foi construído em arquitetura de **Arquivo Único (Serverless & Client-Side)**:
 
----
-
-## ⚙️ Como Executar Localmente
-
-### Pré-requisitos
-* Node.js v18 ou superior instalado.
-* Uma chave de API do Gemini configurada.
-
-### Instalação de dependências e configuração
-1. Clone o repositório para sua máquina local:
-   ```bash
-   git clone https://github.com/chapermann/organizador-round-medico.git
-   cd organizador-round-medico
-   ```
-2. Instale as dependências padrão:
-   ```bash
-   npm install
-   ```
-3. Renomeie o arquivo `.env.example` para `.env` e coloque sua chave de API do Google Gemini:
-   ```env
-   GEMINI_API_KEY="AIzaSyYourGeminiApiKeyHere..."
-   ```
-
-### Rodando o Servidor de Desenvolvimento
-```bash
-npm run dev
-```
-O servidor Express rodará integrado com o middleware do Vite para servir hot reloading dinâmico de assets do React em `http://localhost:3000`.
-
-### Compilando para Produção
-O comando de build compila os arquivos do client React e gera um bundle condensado otimizado em CommonJS para o servidor Express em `dist/server.cjs`:
-```bash
-npm run build
-```
-
-Para inicializar a versão compilada em seu contêiner de Cloud Run ou Docker:
-```bash
-npm run start
-```
+1. **Interface e Lógica (Front-end)**: Um único arquivo autônomo `index.html` contendo estrutura HTML5, estilização via CSS nativo e reatividade em JavaScript Vanila puro. Sem dependências de compilação ou frameworks pesados.
+2. **Processamento de IA (Back-end)**: Integração via chamadas de API assíncronas para a API de Inferência da NVIDIA, utilizando o modelo de linguagem de larga escala `openai/gpt-oss-120b` (Llama/DeepSeek de alta performance).
+3. **Roteamento de Segurança**: Tráfego intermediado através de regras de proxy via Cloudflare Workers corporativo (`https://nvidia-api-proxy.chapermann.workers.dev/`) para contornar problemas de restrição e CORS em navegadores de estações clínicas.
 
 ---
 
-## 🩺 Licença
+## ⚙️ Como Executar e Implantar
 
-Este projeto é desenvolvido e distribuído sob a Licença Apache-2.0. Consulte o arquivo de licença ou metadados para obter mais informações. 
+Por ser uma aplicação baseada inteiramente no lado do cliente (Client-Side), **não existe processo de instalação ou pré-requisitos de servidor (como Node.js, Docker ou Python)**.
 
-Desenvolvido para organizar o cotidiano do centro médico e otimizar vidas no hospital por [chapermann](https://github.com/chapermann). No Projeto Prompts Poderosos.
+### Execução Local Imediata
+1. Baixe o arquivo `index.html` deste repositório.
+2. Dê duplo clique no arquivo em qualquer computador. Ele abrirá instantaneamente em qualquer navegador moderno (Chrome, Edge, Safari) pronto para uso.
+
+### Configuração Inicial (Primeiro Uso)
+1. Abra o aplicativo.
+2. No canto superior direito, clique no botão **⚙ Configurações do Sistema**.
+3. Insira sua chave de acesso pessoal da NVIDIA (`NVIDIA API KEY`) no campo correspondente.
+4. Clique em **Salvar Configurações**. A chave ficará armazenada com segurança na sessão do seu navegador e o processamento clínico estará liberado.
+
+---
+
+## 🩺 Licença e Créditos
+
+Este projeto é desenvolvido e distribuído sob a Licença Apache-2.0.
+
+Desenvolvido para organizar o cotidiano do centro médico, otimizar a comunicação linear e salvar vidas no ecossistema hospitalar por [chapermann](https://github.com/chapermann) dentro do escopo do **Projeto Prompts Poderosos**.
