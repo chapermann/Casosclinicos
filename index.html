@@ -211,11 +211,15 @@
         <button class="btn-config-toggle" onclick="toggleConfigPanel()">⚙ Configurações do Sistema</button>
     </header>
 
-    <!-- PAINEL DE CONFIGURAÇÃO ADMINISTRATIVA -->
     <div class="panel-block config-panel" id="config-panel">
-        <h2>Gerenciador de Modelos (.md)</h2>
-        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 15px;">Insira um item por linha para atualizar os formulários do sistema de forma dinâmica.</p>
+        <h2>Gerenciador de Modelos (.md) e API</h2>
+        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 15px;">Configure as definições dos formulários e insira sua credencial de acesso da NVIDIA.</p>
         
+        <div class="form-group">
+            <label>NVIDIA API KEY (nvapi-...):</label>
+            <input type="password" id="config-api-key" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" placeholder="Cole aqui sua nvapi-...">
+        </div>
+
         <div class="form-group">
             <label>Itens do MODELO_CHECKLIST_MEDICO.md (Um por linha):</label>
             <textarea id="config-checklist-raw" class="config-textarea"></textarea>
@@ -223,21 +227,19 @@
 
         <div class="form-group">
             <label>Itens do MODELO_ALTA_MEDICA.md (Um por linha):</label>
-            <div class="alert-info">Coloque o sinal de menos (-) antes do texto apenas se a resposta "Sim" for prejudicial para a alta (subtrair pontuação). Exemplo: <i>-Paciente tem doença clínica descompensada?</i></div>
+            <div class="alert-info">Coloque o sinal de menos (-) antes do texto apenas se a resposta "Sim" for prejudicial para a alta (subtrair pontuação).</div>
             <textarea id="config-alta-raw" class="config-textarea"></textarea>
         </div>
         
-        <button class="btn-action" style="background-color: #10b981;" onclick="salvarConfiguracoesFormularios()">Atualizar Formulários</button>
+        <button class="btn-action" style="background-color: #10b981;" onclick="salvarConfiguracoesFormularios()">Salvar Configurações</button>
     </div>
 
-    <!-- PAINEL PRINCIPAL DE LEITOS -->
     <div class="sector-title">Sala Vermelha</div>
     <div class="grid-beds" id="sector-red"></div>
 
     <div class="sector-title">Retaguarda do Trauma</div>
     <div class="grid-beds" id="sector-trauma"></div>
 
-    <!-- ÁREA DE TRABALHO DO LEITO SELECIONADO -->
     <div class="panel-block workspace" id="workspace">
         <h2 id="workspace-title">Leito X</h2>
         
@@ -271,7 +273,6 @@
         </div>
     </div>
 
-    <!-- ABA DE COMPILAÇÃO DA UNIDADE -->
     <div class="tab-compiled">
         <h2>Consolidação de Evoluções da Unidade</h2>
         <p>Gere e compile todos os leitos alimentados pelo plantão nas últimas 12 horas.</p>
@@ -290,7 +291,7 @@
 
     const DEFAULT_CHECKLIST = [
         "Profilaxia TVP", "Profilaxia úlcera (Gastrica/pele)", "Profilaxia Delirium", "Paciente recebendo Dieta",
-        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem e anotações da enfermagem.",
+        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem and anotações da enfermagem.",
         "Monitorização completa?", "Em ventilação mecânica? Anotou os parâmetros ventilatórios?", "Acompanhou o banho do paciente? Lesões de pele?",
         "Em diálise? Se sim qual programa ou tratamento indicado?", "Retirada de dispositivos? CVD? PVP? Drenos?", "Fisioterapia",
         "Fonoaudiologia acompanhando?", "Necessidade de avaliação do dentista / bucomaxilofacial?", "Registro fotográfico de lesões?",
@@ -332,6 +333,7 @@
     function carregarConfiguracoesModelos() {
         const chkSalvo = localStorage.getItem("cfg_checklist_list");
         const altaSalva = localStorage.getItem("cfg_alta_list");
+        const apiKeySalva = localStorage.getItem("cfg_nvidia_key");
 
         if (chkSalvo) {
             checklistItensAtuais = JSON.parse(chkSalvo);
@@ -349,6 +351,10 @@
             });
         }
 
+        if (apiKeySalva) {
+            document.getElementById("config-api-key").value = apiKeySalva;
+        }
+
         document.getElementById("config-checklist-raw").value = checklistItensAtuais.map(i => i.text).join("\n");
         document.getElementById("config-alta-raw").value = altaItensAtuais.map(i => (i.inv ? "-" : "") + i.text).join("\n");
 
@@ -358,6 +364,7 @@
     function salvarConfiguracoesFormularios() {
         const chkRaw = document.getElementById("config-checklist-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
         const altaRaw = document.getElementById("config-alta-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+        const apiKeyInput = document.getElementById("config-api-key").value.trim();
 
         checklistItensAtuais = chkRaw.map((txt, index) => ({ id: `k_${index}`, text: txt }));
         altaItensAtuais = altaRaw.map((txt, index) => {
@@ -368,11 +375,12 @@
 
         localStorage.setItem("cfg_checklist_list", JSON.stringify(checklistItensAtuais));
         localStorage.setItem("cfg_alta_list", JSON.stringify(altaItensAtuais));
+        localStorage.setItem("cfg_nvidia_key", apiKeyInput);
 
         renderizarCamposFormularios();
         toggleConfigPanel();
         if (leitoAtual) carregarLeitoExistenteAposMudanca();
-        alert("Modelos e formulários atualizados com sucesso para toda a unidade!");
+        alert("Configurações atualizadas com sucesso!");
     }
 
     function renderizarCamposFormularios() {
@@ -429,7 +437,7 @@
             const btn = document.createElement("button");
             btn.className = "btn-bed";
             btn.id = `btn-${idLeito}`;
-            btn.onclick = () => carregarLeito(idLeito, setor, i, prefixo);
+            btn.onclick = () => carregarLeito(idLeito, sector, i, prefixo);
             btn.innerHTML = `
                 <span>Leito ${i}</span>
                 <div class="status-light ${temEvolucao}" id="light-${idLeito}"></div>
@@ -506,6 +514,13 @@
             return;
         }
 
+        const apiKey = localStorage.getItem("cfg_nvidia_key") || "";
+        if (!apiKey) {
+            alert("Por favor, clique no botão cinza '⚙ Configurações do Sistema' no topo e insira sua NVIDIA API KEY para processar.");
+            toggleConfigPanel();
+            return;
+        }
+
         document.getElementById("loading").style.display = "block";
         document.getElementById("results-area").style.display = "none";
 
@@ -537,18 +552,23 @@
         try {
             const response = await fetch(CONFIG.PROXY_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
                     model: CONFIG.MODEL,
                     messages: [
-                        { role: "system", content: "Voce e um assistente medico especialista em compilaçao de prontuarios. Responda apenas com texto limpo e corrido." },
+                        { role: "system", content: "Voce e um assistente medico especialista em compilaçao e auditoria de prontuarios estruturados na passagem de caso (SOAP). Responda apenas com texto plano corrido estruturado de forma linear tradicional dentro das tags XML especificadas, obedecendo regras estritas de sigilo e resoluçao de termos tecnicos." },
                         { role: "user", content: promptDeProcessamento }
                     ],
                     temperature: 0.1
                 })
             });
 
-            if (!response.ok) throw new Error("Erro de conexão com o servidor de inteligência artificial.");
+            if (!response.ok) {
+                throw new Error(`Servidor respondeu com erro HTTP ${response.status}. Verifique se sua API Key de configurações está correta.`);
+            }
 
             const data = await response.json();
             separarOutputs(data.choices[0].message.content);
@@ -565,7 +585,7 @@
     }
 
     function construirPromptIA(evolucao, chk, alta, pontuacao, localizacao) {
-        let checklistTexto = "CHECKLIST DIARIO REALIZADO PELO PLANTONISTA:\n";
+        let checklistTexto = "CHECKLIST DIARIO REALIZADO PELO PLANTONISTA BEIRA LEITO:\n";
         checklistItensAtuais.forEach(item => {
             const r = chk[item.id] ? chk[item.id].toUpperCase() : "NAO RESPONDIDO";
             checklistTexto += `- ${item.text}: ${r}\n`;
@@ -577,13 +597,14 @@
         else altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica.\n";
 
         return `
-Você deve ler a evolução médica abaixo e gerar DOIS relatórios distintos em formato de texto plano e corrido (sem colunas, sem tabelas e sem tabulações).
+Você deve ler os registros médicos abaixo e atuar como um auditor especialista clínico. Analise a evolução cronológica, resolva as abreviações e monte os relatórios estruturados.
 
-DIRETRIZES DE OURO:
-1. ANONIMIZAÇÃO COMPLETA: Substitua nomes por abreviações (Ex: Paulo da Silva Almeida Junior vira PSAJ). Delete CPFs ou identidades.
-2. PESO PADRÃO: Se não houver peso descrito na evolução, assuma obrigatoriamente 75Kg como peso padrão.
-3. ESTILO: Português extremamente formal e técnico. Sem emojis ou marcas gráficas de Markdown.
-4. TRADUÇÃO DE TERMOS: Consolide IH (Data de internação), TC (Tomografia), PO (Pós-operatório), NC (Neurocirurgia), CG (Cirurgia Geral). 
+DIRETRIZES ÉTICAS E DE TRADUÇÃO (OBRIGATÓRIO):
+1. ANONIMIZAÇÃO RIGOROSA: Nomes completos devem virar apenas Iniciais (Ex: João da Silva vira JS). Delete CPFs, identidades e registros pessoais numéricos.
+2. CONVERSÃO ÉTICA PARA CID-10: Doenças com potencial estigma social ou conotações legais (Neoplasias/Câncer, Tuberculose, HIV, AIDS, ISTs, tentativas de auto-extermínio ou interrupção de gravidez) devem ser OBRIGATORIAMENTE convertidas para seus respectivos códigos CID-10 no texto para evitar exposição desnecessária do paciente.
+3. GLOSSÁRIO DE TERMOS MÉDICOS (Use para traduzir/esclarecer se aplicável): IH/DI (Data de internação), CNO2 (Cateter Nasal de O2), PC/PS (Pressão Controlada ou Suporte), PFC (Plasma Fresco Congelado), RNC (Rebaixamento de Nível de Consciência), TOT/IOT (Intubação Oro Traqueal), TQT (Traqueostomia), LE (Laparotomia Exploradora), VMI (Ventilação Mecânica Invasiva), VNI (Ventilação Não Invasiva), TNE (Terapia Nutricional Enteral), SF (Soro Fisiológico), SG (Soro Glicosado).
+4. PESO PADRÃO: Se não houver peso explícito na evolução, assuma universalmente 75Kg.
+5. ESTILO: Português clássico e formal, sem marcas textuais de markdown (asteriscos, hashtags), sem tabelas ou colunas. Texto corrido linear simples.
 
 --- EVOLUÇÃO MÉDICA DE HOJE INSERIDA ---
 ${evolucao}
@@ -591,29 +612,31 @@ ${evolucao}
 --- DADOS ADICIONAIS DO FORMULÁRIO ---
 ${checklistTexto}
 ${altaTexto}
-LOCALIZAÇÃO DO LEITO ATUAL NO SISTEMA: ${localizacao}
+LOCALIZAÇÃO ATUAL DO LEITO: ${localizacao}
 
 Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes exatamente assim:
 
 <ROUND_MEDICO>
 [Gere aqui o MODELO_ROUND_MEDICO seguindo esta estrutura sequencial linear:
-1. Identificação (Iniciais, idade, sexo, procedência)
-2. Data e Tempo de Internação, Motivo da Internação
+1. Identificação (Iniciais do Nome, idade, sexo, procedência)
+2. Data/Tempo de Internação e Motivo da Internação
 3. Situação cirúrgica (Se PO, tempo decorrido, procedimento)
 4. Comorbidades e condições associadas
 5. Situação clínica atual (Sedação, Drogas em infusão, Invasões, Sinais vitais atuais, VM se houver, Estado neurológico, Exame físico relevante)
 6. Gasometria arterial
-7. Exames de imagem
+7. Exames de imagem (resuma laudos longos focado nos dados cruciais; achados normais descreva como normais)
 8. Exames laboratoriais relevantes
 9. Antibióticos em uso (nome, dose, tempo de uso)
 10. Impressão do caso (sumário)
 11. Condutas e rotina pactuadas
-Adicione ao final a sessão: Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
+Incorpore o checklist diário nas sessões pertinentes e adicione ao final os Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
 </ROUND_MEDICO>
 
 <PASSAGEM_PLANTAO>
-[Gere aqui o MODELO_PASSAGEM_PLANTAO: O texto deve iniciar OBRIGATORIAMENTE com a identificação padronizada do paciente no seguinte formato exato: "Iniciais do Nome, XX anos, ${localizacao}.".
-Em seguida, continue com o texto altamente objetivo, conciso e focado puramente na lista de problemas e nas resoluções ou pendências imediatas para o próximo plantão. Almeje em torno de 80 palavras no total.]
+[Gere aqui o MODELO_PASSAGEM_PLANTAO: Um texto fluido focado na comunicação ágil de médico para médico.
+- O texto DEVE iniciar obrigatoriamente com o padrão: "Iniciais do Nome, XX anos, ${localizacao}."
+- Foque exclusivamente no Estado Geral Atual, na Lista de Problemas Ativos e nas resoluções ou pendências imediatas urgentes para o próximo plantão (vigilâncias, pareceres, exames programados, metas).
+- Mantenha o texto rigorosamente conciso, com tamanho entre 100 e 120 palavras no total.]
 </PASSAGEM_PLANTAO>
 `;
     }
