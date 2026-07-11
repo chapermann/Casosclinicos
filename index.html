@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HandoffMed - Resumo Clínico</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { font-family: system-ui, -apple-system, sans-serif; }
     .leito { transition: all 0.2s; }
-    .leito:hover { transform: scale(1.05); }
+    .leito:hover { transform: scale(1.04); }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -23,104 +22,94 @@
     <div class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-11 gap-3" id="vermelha"></div>
   </div>
 
-  <div>
+  <div class="mb-12">
     <h2 class="text-xl font-semibold text-orange-800 mb-3">Retaguarda Trauma (6 leitos)</h2>
     <div class="grid grid-cols-3 md:grid-cols-6 gap-3" id="retaguarda"></div>
   </div>
 
-  <!-- Painel do Leito -->
-  <div id="painel" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[95vh] overflow-hidden">
-      <div class="p-6 border-b">
+  <!-- Painel -->
+  <div id="painel" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[95vh] overflow-hidden">
+      <div class="p-6 border-b flex justify-between items-center">
         <h3 class="text-2xl font-bold" id="leito-title"></h3>
-        <input type="text" id="prontuario" placeholder="Prontuário + Iniciais (ex: 655727 - MM)" 
-               class="w-full mt-4 p-3 border rounded-lg focus:outline-none focus:border-blue-500">
+        <button onclick="fecharPainel()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
       </div>
 
       <div class="p-6">
-        <textarea id="evolucao" rows="10" 
-                  class="w-full p-4 border rounded-lg focus:outline-none focus:border-blue-500"
+        <input type="text" id="prontuario" placeholder="Prontuário + Iniciais (ex: 655727 - MM)" 
+               class="w-full p-4 border rounded-xl focus:outline-none focus:border-blue-500 text-lg">
+        
+        <textarea id="evolucao" rows="12" 
+                  class="w-full mt-4 p-4 border rounded-xl focus:outline-none focus:border-blue-500"
                   placeholder="Cole aqui a evolução médica completa..."></textarea>
       </div>
 
-      <div class="p-6 border-t bg-gray-50 flex flex-wrap gap-3">
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="alta" class="w-5 h-5">
-          <span>Preenche critérios de alta para Enfermaria</span>
+      <div class="p-6 border-t bg-gray-50 flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="alta" class="w-5 h-5 accent-blue-600">
+          <span class="text-gray-700">Preenche critérios de alta para Enfermaria</span>
         </label>
+      </div>
 
+      <div class="p-6 border-t flex gap-3">
         <button onclick="gerarResumo('completo')" 
-                class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium flex-1">
-          📋 Gerar Resumo Completo (Round)
+                class="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-semibold text-lg">
+          📋 Resumo Completo (Round)
         </button>
-        
         <button onclick="gerarResumo('passagem')" 
-                class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-lg font-medium flex-1">
-          ⚡ Gerar Resumo Passagem de Plantão
+                class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-xl font-semibold text-lg">
+          ⚡ Resumo Passagem de Plantão
         </button>
       </div>
 
-      <div class="p-6 border-t max-h-[45vh] overflow-auto" id="resultado"></div>
-
-      <div class="p-4 border-t flex justify-end gap-3 bg-gray-50">
-        <button onclick="fecharPainel()" class="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Fechar</button>
-      </div>
+      <div class="p-6 border-t max-h-[45vh] overflow-auto bg-gray-50" id="resultado"></div>
     </div>
   </div>
 
   <!-- Histórico -->
   <div class="mt-12">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">Resumos Gerados - Plantão Atual</h2>
-      <button onclick="exportarTXT()" 
-              class="bg-gray-800 text-white px-5 py-2 rounded-lg hover:bg-black">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-xl font-semibold">Resumos Gerados</h2>
+      <button onclick="exportarTXT()" class="bg-gray-800 hover:bg-black text-white px-6 py-3 rounded-xl">
         📥 Exportar Tudo como TXT
       </button>
     </div>
-    <div id="historico" class="space-y-4"></div>
+    <div id="historico" class="space-y-6"></div>
   </div>
 </div>
 
 <script>
-// ==================== CONFIGURAÇÃO API ====================
-const API_URL = "https://nvidia-proxy.chapermann.workers.dev/";
+// ==================== NOVO WORKER ====================
+const API_URL = "https://holy-cake-c35b.chapermann.workers.dev/";
 
-// ==================== DADOS ====================
 let leitos = [];
 let historico = JSON.parse(localStorage.getItem('handoffHistorico')) || [];
 
-// Criar leitos
+// Criar leitos (mesma função anterior)
 function criarLeitos() {
-  // Sala Vermelha
   const verm = document.getElementById('vermelha');
   for (let i = 1; i <= 11; i++) {
-    leitos.push({id: `V${i}`, nome: `Vermelha ${i}`, tipo: 'vermelha', resumos: {}});
-    verm.innerHTML += criarCardLeito(`V${i}`, `Vermelha ${i}`);
+    verm.innerHTML += criarCard(`V${i}`, `Vermelha ${i}`);
   }
-  // Retaguarda
   const ret = document.getElementById('retaguarda');
   for (let i = 1; i <= 6; i++) {
-    leitos.push({id: `R${i}`, nome: `Retaguarda ${i}`, tipo: 'retaguarda', resumos: {}});
-    ret.innerHTML += criarCardLeito(`R${i}`, `Retaguarda ${i}`);
+    ret.innerHTML += criarCard(`R${i}`, `Retaguarda ${i}`);
   }
 }
 
-function criarCardLeito(id, nome) {
+function criarCard(id, nome) {
   return `
-    <div onclick="abrirLeito('${id}')" class="leito bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-md">
-      <div class="flex items-center gap-3">
-        <div id="status-${id}" class="w-4 h-4 bg-red-500 rounded-full"></div>
-        <div>
-          <p class="font-semibold">${nome}</p>
-        </div>
+    <div onclick="abrirLeito('${id}')" class="leito bg-white border-2 border-gray-200 rounded-2xl p-5 cursor-pointer hover:border-blue-500">
+      <div class="flex items-center gap-4">
+        <div id="status-${id}" class="w-5 h-5 bg-red-500 rounded-full ring-2 ring-red-200"></div>
+        <p class="font-semibold text-lg">${nome}</p>
       </div>
     </div>`;
 }
 
-// ==================== FUNÇÕES ====================
 function abrirLeito(id) {
   document.getElementById('painel').classList.remove('hidden');
-  document.getElementById('leito-title').textContent = leitos.find(l => l.id === id).nome;
+  document.getElementById('leito-title').textContent = leitos.find(l => l.id === id)?.nome || id;
   document.getElementById('prontuario').value = '';
   document.getElementById('evolucao').value = '';
   document.getElementById('resultado').innerHTML = '';
@@ -137,96 +126,84 @@ async function gerarResumo(tipo) {
   const texto = document.getElementById('evolucao').value.trim();
   const alta = document.getElementById('alta').checked;
 
-  if (!texto) {
-    alert("Por favor, cole a evolução médica.");
-    return;
-  }
+  if (!texto) return alert("Cole a evolução médica.");
 
   const resultadoDiv = document.getElementById('resultado');
-  resultadoDiv.innerHTML = `<p class="text-gray-500">Gerando resumo com IA...</p>`;
+  resultadoDiv.innerHTML = `<p class="text-gray-500 py-8 text-center">Gerando resumo...</p>`;
 
   const systemPrompt = tipo === 'completo' 
-    ? `Você é um médico intensivista sênior. Elabore um Resumo Completo e bem estruturado para discussão em round médico. Use linguagem formal e profissional. Estrutura: Identificação, Antecedentes, Motivo da Internação, Evolução, Exames Relevantes, Exame Físico, Conduta Atual e Pendências.`
-    : `Você é um médico intensivista. Elabore um resumo ultra-conciso (50-80 palavras) para passagem de plantão verbal. Texto fluido, formal e objetivo.`;
+    ? `Você é um médico intensivista sênior. Elabore um Resumo Completo para round médico.`
+    : `Você é um médico intensivista. Elabore um resumo ultra-conciso (50-80 palavras) para passagem de plantão.`;
 
   try {
+    const payload = {
+      model: "deepseek-ai/deepseek-v4-pro",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Prontuário: ${prontuario}\n${alta ? "Preenche critérios de alta para Enfermaria.\n" : ""}Evolução:\n${texto}` }
+      ],
+      temperature: 0.7,
+      max_tokens: tipo === 'completo' ? 1500 : 700
+    };
+
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "deepseek-ai/deepseek-v4-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Prontuário: ${prontuario}\n${alta ? "Preenche critérios de alta para Enfermaria.\n" : ""}Evolução:\n${texto}` }
-        ],
-        temperature: 0.7,
-        max_tokens: 1200
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
-    const resumo = data.choices?.[0]?.message?.content || "Erro ao gerar resumo.";
+    const resumo = data.choices?.[0]?.message?.content || data.error || "Erro desconhecido";
 
     resultadoDiv.innerHTML = `
-      <div class="bg-gray-100 p-5 rounded-xl">
-        <h4 class="font-bold mb-2">${tipo === 'completo' ? 'Resumo Completo - Round Médico' : 'Resumo para Passagem de Plantão'}</h4>
-        <p class="whitespace-pre-wrap text-gray-800 leading-relaxed">${resumo}</p>
+      <div class="bg-white p-6 rounded-2xl border">
+        <h4 class="font-bold text-xl mb-4">${tipo === 'completo' ? 'Resumo Completo - Round Médico' : 'Resumo para Passagem de Plantão'}</h4>
+        <p class="whitespace-pre-wrap leading-relaxed text-gray-800">${resumo}</p>
       </div>
-      <button onclick="copiarResumo(this)" class="mt-4 bg-gray-700 text-white px-5 py-2 rounded-lg">Copiar Texto</button>
+      <button onclick="copiarResumo(this)" class="mt-6 bg-blue-700 text-white px-8 py-3 rounded-xl">Copiar Texto</button>
     `;
 
-    // Salvar no histórico
     salvarHistorico(leitoId, prontuario, tipo, resumo);
 
   } catch (err) {
-    resultadoDiv.innerHTML = `<p class="text-red-600">Erro na API: ${err.message}</p>`;
+    resultadoDiv.innerHTML = `<p class="text-red-600">Erro: ${err.message}</p>`;
   }
 }
 
 function copiarResumo(btn) {
-  const text = btn.parentElement.querySelector('p').textContent;
+  const text = btn.parentElement.querySelector('p').innerText;
   navigator.clipboard.writeText(text);
-  btn.textContent = "✅ Copiado!";
-  setTimeout(() => btn.textContent = "Copiar Texto", 2000);
+  btn.innerHTML = '✅ Copiado!';
+  setTimeout(() => btn.innerHTML = 'Copiar Texto', 2500);
 }
 
+// Funções de histórico e exportar (mesmas de antes)
 function salvarHistorico(leitoId, prontuario, tipo, resumo) {
-  const entry = {
-    data: new Date().toLocaleString('pt-BR'),
-    leito: leitoId,
-    prontuario: prontuario,
-    tipo: tipo,
-    resumo: resumo
-  };
+  const entry = { data: new Date().toLocaleString('pt-BR'), leito: leitoId, prontuario, tipo, resumo };
   historico.unshift(entry);
   localStorage.setItem('handoffHistorico', JSON.stringify(historico));
   renderHistorico();
 }
 
 function renderHistorico() {
-  const div = document.getElementById('historico');
-  div.innerHTML = historico.map(h => `
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <small class="text-gray-500">${h.data} - ${h.leito} - ${h.prontuario}</small>
-      <p class="mt-2 text-sm whitespace-pre-wrap">${h.resumo}</p>
+  document.getElementById('historico').innerHTML = historico.map(h => `
+    <div class="bg-white p-5 rounded-2xl border">
+      <small class="text-gray-500">${h.data} — ${h.leito} — ${h.prontuario}</small>
+      <p class="mt-3 text-gray-700 whitespace-pre-wrap">${h.resumo}</p>
     </div>
   `).join('');
 }
 
 function exportarTXT() {
-  if (historico.length === 0) return alert("Nenhum resumo gerado ainda.");
-  
-  let texto = `HandoffMed - Plantão ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  if (!historico.length) return alert("Nenhum resumo ainda.");
+  let txt = `HandoffMed - Plantão ${new Date().toLocaleDateString('pt-BR')}\n\n`;
   historico.forEach(h => {
-    texto += `=== ${h.leito} | ${h.prontuario} | ${h.tipo.toUpperCase()} ===\n`;
-    texto += h.resumo + "\n\n";
+    txt += `=== ${h.leito} | ${h.prontuario} | ${h.tipo.toUpperCase()} ===\n${h.resumo}\n\n`;
   });
-
-  const blob = new Blob([texto], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob([txt], {type: 'text/plain'});
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `Handoff_Plantao_${new Date().toISOString().slice(0,10)}.txt`;
+  a.href = URL.createObjectURL(blob);
+  a.download = `Handoff_${new Date().toISOString().slice(0,10)}.txt`;
   a.click();
 }
 
@@ -234,6 +211,5 @@ function exportarTXT() {
 criarLeitos();
 renderHistorico();
 </script>
-
 </body>
 </html>
