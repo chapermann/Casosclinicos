@@ -1,718 +1,238 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão Clínica - Sala Vermelha & Trauma</title>
-    <style>
-        :root {
-            --bg-primary: #f8fafc;
-            --text-main: #1e293b;
-            --border-color: #e2e8f0;
-            --red-light: #ef4444;
-            --green-light: #22c55e;
-            --accent: #0284c7;
-            --dark-slate: #0f172a;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-        }
-
-        .header-text h1 { margin: 0 0 5px 0; color: var(--dark-slate); }
-        .header-text p { margin: 0; color: #64748b; }
-
-        .btn-config-toggle {
-            background-color: #64748b;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-
-        .btn-config-toggle:hover { background-color: #475569; }
-
-        h2, h3 { color: var(--dark-slate); margin-top: 0; }
-
-        .sector-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #475569;
-        }
-
-        .grid-beds {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 35px;
-        }
-
-        .btn-bed {
-            padding: 15px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background-color: #fff;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .btn-bed:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .btn-bed.active {
-            border-color: var(--accent);
-            background-color: #f0f9ff;
-        }
-
-        .status-light { width: 13px; height: 13px; border-radius: 50%; }
-        .status-red { background-color: var(--red-light); box-shadow: 0 0 6px var(--red-light); }
-        .status-green { background-color: var(--green-light); box-shadow: 0 0 6px var(--green-light); }
-
-        .panel-block {
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
-
-        .workspace { display: none; }
-        .config-panel { display: none; background-color: #f8fafc; border: 2px dashed #cbd5e1; }
-
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; }
-
-        textarea {
-            width: 100%;
-            height: 140px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.95rem;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-
-        .config-textarea { height: 180px; background: #fafafa; }
-
-        .section-checklist {
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .checklist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 10px;
-        }
-
-        .chk-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 10px 14px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-        }
-
-        .chk-label { font-size: 0.9rem; font-weight: 500; padding-right: 10px; }
-        .radio-group { display: flex; gap: 15px; white-space: nowrap; }
-        .radio-group label { display: inline-flex; align-items: center; gap: 4px; font-weight: normal; font-size: 0.9rem; margin: 0; cursor: pointer; }
-
-        .btn-action {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-action:hover { background-color: #0369a1; }
-
-        .btn-download {
-            background-color: #475569;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .btn-download:hover { background-color: #334155; }
-
-        .output-box {
-            margin-top: 20px;
-            background: var(--dark-slate);
-            color: #f8fafc;
-            padding: 20px;
-            border-radius: 6px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 0.95rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .tab-compiled { border-top: 3px solid #cbd5e1; padding-top: 25px; margin-top: 40px; }
-        .alert-info { background: #e0f2fe; color: #0369a1; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HandoffMed - Resumo Clínico</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; }
+    .leito { transition: all 0.2s; }
+    .leito:hover { transform: scale(1.05); }
+  </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
 
-<div class="container">
-    <header>
-        <div class="header-text">
-            <h1>Gestão de Prontuários e Passagem de Caso</h1>
-            <p>Sala Vermelha & Retaguarda do Trauma — Hospital Geral</p>
-        </div>
-        <button class="btn-config-toggle" onclick="toggleConfigPanel()">⚙ Configurações do Sistema</button>
-    </header>
+<div class="max-w-7xl mx-auto p-4">
+  <h1 class="text-3xl font-bold text-center text-blue-900 mb-8">HandoffMed - Resumo Clínico</h1>
 
-    <div class="panel-block config-panel" id="config-panel">
-        <h2>Gerenciador de Modelos (.md) e API</h2>
-        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 15px;">Configure as definições dos formulários e insira sua credencial de acesso da NVIDIA.</p>
+  <!-- Leitos -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold text-red-800 mb-3">Sala Vermelha (11 leitos)</h2>
+    <div class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-11 gap-3" id="vermelha"></div>
+  </div>
+
+  <div>
+    <h2 class="text-xl font-semibold text-orange-800 mb-3">Retaguarda Trauma (6 leitos)</h2>
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-3" id="retaguarda"></div>
+  </div>
+
+  <!-- Painel do Leito -->
+  <div id="painel" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[95vh] overflow-hidden">
+      <div class="p-6 border-b">
+        <h3 class="text-2xl font-bold" id="leito-title"></h3>
+        <input type="text" id="prontuario" placeholder="Prontuário + Iniciais (ex: 655727 - MM)" 
+               class="w-full mt-4 p-3 border rounded-lg focus:outline-none focus:border-blue-500">
+      </div>
+
+      <div class="p-6">
+        <textarea id="evolucao" rows="10" 
+                  class="w-full p-4 border rounded-lg focus:outline-none focus:border-blue-500"
+                  placeholder="Cole aqui a evolução médica completa..."></textarea>
+      </div>
+
+      <div class="p-6 border-t bg-gray-50 flex flex-wrap gap-3">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="alta" class="w-5 h-5">
+          <span>Preenche critérios de alta para Enfermaria</span>
+        </label>
+
+        <button onclick="gerarResumo('completo')" 
+                class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium flex-1">
+          📋 Gerar Resumo Completo (Round)
+        </button>
         
-        <div class="form-group">
-            <label>NVIDIA API KEY (nvapi-...):</label>
-            <input type="password" id="config-api-key" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" placeholder="Cole aqui sua nvapi-...">
-        </div>
+        <button onclick="gerarResumo('passagem')" 
+                class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-lg font-medium flex-1">
+          ⚡ Gerar Resumo Passagem de Plantão
+        </button>
+      </div>
 
-        <div class="form-group">
-            <label>Itens do MODELO_CHECKLIST_MEDICO.md (Um por linha):</label>
-            <textarea id="config-checklist-raw" class="config-textarea"></textarea>
-        </div>
+      <div class="p-6 border-t max-h-[45vh] overflow-auto" id="resultado"></div>
 
-        <div class="form-group">
-            <label>Itens do MODELO_ALTA_MEDICA.md (Um por linha):</label>
-            <div class="alert-info">Coloque o sinal de menos (-) antes do texto apenas se a resposta "Sim" for prejudicial para a alta (subtrair pontuação).</div>
-            <textarea id="config-alta-raw" class="config-textarea"></textarea>
-        </div>
-        
-        <button class="btn-action" style="background-color: #10b981;" onclick="salvarConfiguracoesFormularios()">Salvar Configurações</button>
+      <div class="p-4 border-t flex justify-end gap-3 bg-gray-50">
+        <button onclick="fecharPainel()" class="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Fechar</button>
+      </div>
     </div>
+  </div>
 
-    <div class="sector-title">Sala Vermelha</div>
-    <div class="grid-beds" id="sector-red"></div>
-
-    <div class="sector-title">Retaguarda do Trauma</div>
-    <div class="grid-beds" id="sector-trauma"></div>
-
-    <div class="panel-block workspace" id="workspace">
-        <h2 id="workspace-title">Leito X</h2>
-        
-        <div class="form-group">
-            <label for="input-evolution">Cole aqui a evolução médica de hoje:</label>
-            <textarea id="input-evolution" placeholder="Insira a evolução médica completa sem dados identificadores explícitos..."></textarea>
-        </div>
-
-        <div class="section-checklist">
-            <h3>MODELO_CHECKLIST_MEDICO.md</h3>
-            <div class="checklist-grid" id="checklist-container"></div>
-        </div>
-
-        <div class="section-checklist" style="background-color: #e0f2fe;">
-            <h3>MODELO_ALTA_MEDICA.md (Critérios de Alta para Enfermaria)</h3>
-            <div class="checklist-grid" id="alta-container"></div>
-        </div>
-
-        <button class="btn-action" onclick="processarDadosLeito()">Processar e Gerar Relatórios</button>
-
-        <div id="loading" style="display:none; margin-top: 15px; font-weight: bold; color: var(--accent);">Processando com inteligência artificial...</div>
-
-        <div id="results-area" style="display:none;">
-            <h3>MODELO_ROUND_MEDICO.txt</h3>
-            <div class="output-box" id="output-round"></div>
-            <button class="btn-download" onclick="downloadTxt('round')">Download Round (.txt)</button>
-
-            <h3>MODELO_PASSAGEM_PLANTAO.txt</h3>
-            <div class="output-box" id="output-plantao"></div>
-            <button class="btn-download" onclick="downloadTxt('plantao')">Download Passagem (.txt)</button>
-        </div>
+  <!-- Histórico -->
+  <div class="mt-12">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">Resumos Gerados - Plantão Atual</h2>
+      <button onclick="exportarTXT()" 
+              class="bg-gray-800 text-white px-5 py-2 rounded-lg hover:bg-black">
+        📥 Exportar Tudo como TXT
+      </button>
     </div>
-
-    <div class="tab-compiled">
-        <h2>Consolidação de Evoluções da Unidade</h2>
-        <p>Gere e compile todos os leitos alimentados pelo plantão nas últimas 12 horas.</p>
-        <button class="btn-action" style="background-color: #10b981;" onclick="renderizarConsolidado()">Gerar Relatório Consolidado</button>
-        <div class="output-box" id="output-consolidado" style="background: #1e293b;">Nenhum relatório compilado até o momento.</div>
-        <button class="btn-download" id="btn-download-consolidado" style="display:none;" onclick="downloadTxt('consolidado')">Download Consolidado (.txt)</button>
-    </div>
+    <div id="historico" class="space-y-4"></div>
+  </div>
 </div>
 
 <script>
-    const CONFIG = {
-        PROXY_URL: "https://nvidia-api-proxy.chapermann.workers.dev/v1/chat/completions",
-        MODEL: "openai/gpt-oss-120b",
-        MEMORY_TIMEOUT: 12 * 60 * 60 * 1000 
-    };
+// ==================== CONFIGURAÇÃO API ====================
+const API_URL = "https://nvidia-proxy.chapermann.workers.dev/";
 
-    const DEFAULT_CHECKLIST = [
-        "Profilaxia TVP", "Profilaxia úlcera (Gastrica/pele)", "Profilaxia Delirium", "Paciente recebendo Dieta",
-        "Antibioticoterapia", "Culturas", "Eliminações fisiológicas?", "Checar as prescrições com a enfermagem e anotações da enfermagem.",
-        "Monitorização completa?", "Em ventilação mecânica? Anotou os parâmetros ventilatórios?", "Acompanhou o banho do paciente? Lesões de pele?",
-        "Em diálise? Se sim qual programa ou tratamento indicado?", "Retirada de dispositivos? CVD? PVP? Drenos?", "Fisioterapia",
-        "Fonoaudiologia acompanhando?", "Necessidade de avaliação do dentista / bucomaxilofacial?", "Registro fotográfico de lesões?",
-        "Paciente acompanhado por outras especialidades?", "Mobilização?", "ALGUMA MEDICAÇÃO EM FALTA? Institucional ou individualmente?",
-        "Previsão de alta? Quando?", "O que falta para alta médica?"
-    ];
+// ==================== DADOS ====================
+let leitos = [];
+let historico = JSON.parse(localStorage.getItem('handoffHistorico')) || [];
 
-    const DEFAULT_ALTA = [
-        "1 - Paciente encontra-se de ALTA pelas especialidades cirúrgicas?",
-        "2 - Paciente não apresenta nenhuma condição cirúrgica ou potencialmente cirúrgica no momento?",
-        "3 - Paciente encontra-se em ar ambiente?",
-        "4 - Paciente que precisa de oxigênio, necessita de pouco fluxo (até 5L/min) ou de pouca suplementação de oxigênio?",
-        "5 - Paciente encontra-se lúcido?",
-        "6 - Paciente que não encontra-se lúcido, encontra-se hemodinamicamente estável?",
-        "7 - Paciente encontra-se nesse momento sem queixas álgicas?",
-        "-8 - Paciente recebeu alta recentemente ou esteve internado na clínica médica?",
-        "-9 - Paciente tem doença clínica descompensada?",
-        "10 - Paciente tem doença clínica de especialidade que tenha no Hospital?"
-    ];
+// Criar leitos
+function criarLeitos() {
+  // Sala Vermelha
+  const verm = document.getElementById('vermelha');
+  for (let i = 1; i <= 11; i++) {
+    leitos.push({id: `V${i}`, nome: `Vermelha ${i}`, tipo: 'vermelha', resumos: {}});
+    verm.innerHTML += criarCardLeito(`V${i}`, `Vermelha ${i}`);
+  }
+  // Retaguarda
+  const ret = document.getElementById('retaguarda');
+  for (let i = 1; i <= 6; i++) {
+    leitos.push({id: `R${i}`, nome: `Retaguarda ${i}`, tipo: 'retaguarda', resumos: {}});
+    ret.innerHTML += criarCardLeito(`R${i}`, `Retaguarda ${i}`);
+  }
+}
 
-    let checklistItensAtuais = [];
-    let altaItensAtuais = [];
-    let bancoDeDados = {};
-    let leitoAtual = null;
-    let localizacaoAtualTexto = "";
+function criarCardLeito(id, nome) {
+  return `
+    <div onclick="abrirLeito('${id}')" class="leito bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-md">
+      <div class="flex items-center gap-3">
+        <div id="status-${id}" class="w-4 h-4 bg-red-500 rounded-full"></div>
+        <div>
+          <p class="font-semibold">${nome}</p>
+        </div>
+      </div>
+    </div>`;
+}
 
-    function inicializarApp() {
-        carregarConfiguracoesModelos();
-        carregarMemoriaClinica();
-        renderizarLeitos("Sala Vermelha", 11, "sector-red", "SV");
-        renderizarLeitos("Retaguarda do Trauma", 6, "sector-trauma", "RT");
-    }
+// ==================== FUNÇÕES ====================
+function abrirLeito(id) {
+  document.getElementById('painel').classList.remove('hidden');
+  document.getElementById('leito-title').textContent = leitos.find(l => l.id === id).nome;
+  document.getElementById('prontuario').value = '';
+  document.getElementById('evolucao').value = '';
+  document.getElementById('resultado').innerHTML = '';
+  window.currentLeito = id;
+}
 
-    function toggleConfigPanel() {
-        const panel = document.getElementById("config-panel");
-        panel.style.display = (panel.style.display === "block") ? "none" : "block";
-    }
+function fecharPainel() {
+  document.getElementById('painel').classList.add('hidden');
+}
 
-    function carregarConfiguracoesModelos() {
-        const chkSalvo = localStorage.getItem("cfg_checklist_list");
-        const altaSalva = localStorage.getItem("cfg_alta_list");
-        const apiKeySalva = localStorage.getItem("cfg_nvidia_key");
+async function gerarResumo(tipo) {
+  const leitoId = window.currentLeito;
+  const prontuario = document.getElementById('prontuario').value.trim();
+  const texto = document.getElementById('evolucao').value.trim();
+  const alta = document.getElementById('alta').checked;
 
-        if (chkSalvo) {
-            checklistItensAtuais = JSON.parse(chkSalvo);
-        } else {
-            checklistItensAtuais = DEFAULT_CHECKLIST.map((txt, index) => ({ id: `k_${index}`, text: txt }));
-        }
+  if (!texto) {
+    alert("Por favor, cole a evolução médica.");
+    return;
+  }
 
-        if (altaSalva) {
-            altaItensAtuais = JSON.parse(altaSalva);
-        } else {
-            altaItensAtuais = DEFAULT_ALTA.map((txt, index) => {
-                const isInvertido = txt.startsWith("-");
-                const limpo = isInvertido ? txt.substring(1) : txt;
-                return { id: `a_${index}`, text: limpo, inv: isInvertido };
-            });
-        }
+  const resultadoDiv = document.getElementById('resultado');
+  resultadoDiv.innerHTML = `<p class="text-gray-500">Gerando resumo com IA...</p>`;
 
-        if (apiKeySalva) {
-            document.getElementById("config-api-key").value = apiKeySalva;
-        }
+  const systemPrompt = tipo === 'completo' 
+    ? `Você é um médico intensivista sênior. Elabore um Resumo Completo e bem estruturado para discussão em round médico. Use linguagem formal e profissional. Estrutura: Identificação, Antecedentes, Motivo da Internação, Evolução, Exames Relevantes, Exame Físico, Conduta Atual e Pendências.`
+    : `Você é um médico intensivista. Elabore um resumo ultra-conciso (50-80 palavras) para passagem de plantão verbal. Texto fluido, formal e objetivo.`;
 
-        document.getElementById("config-checklist-raw").value = checklistItensAtuais.map(i => i.text).join("\n");
-        document.getElementById("config-alta-raw").value = altaItensAtuais.map(i => (i.inv ? "-" : "") + i.text).join("\n");
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "deepseek-ai/deepseek-v4-pro",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Prontuário: ${prontuario}\n${alta ? "Preenche critérios de alta para Enfermaria.\n" : ""}Evolução:\n${texto}` }
+        ],
+        temperature: 0.7,
+        max_tokens: 1200
+      })
+    });
 
-        renderizarCamposFormularios();
-    }
+    const data = await response.json();
+    const resumo = data.choices?.[0]?.message?.content || "Erro ao gerar resumo.";
 
-    function salvarConfiguracoesFormularios() {
-        const chkRaw = document.getElementById("config-checklist-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
-        const altaRaw = document.getElementById("config-alta-raw").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
-        const apiKeyInput = document.getElementById("config-api-key").value.trim();
+    resultadoDiv.innerHTML = `
+      <div class="bg-gray-100 p-5 rounded-xl">
+        <h4 class="font-bold mb-2">${tipo === 'completo' ? 'Resumo Completo - Round Médico' : 'Resumo para Passagem de Plantão'}</h4>
+        <p class="whitespace-pre-wrap text-gray-800 leading-relaxed">${resumo}</p>
+      </div>
+      <button onclick="copiarResumo(this)" class="mt-4 bg-gray-700 text-white px-5 py-2 rounded-lg">Copiar Texto</button>
+    `;
 
-        checklistItensAtuais = chkRaw.map((txt, index) => ({ id: `k_${index}`, text: txt }));
-        altaItensAtuais = altaRaw.map((txt, index) => {
-            const isInvertido = txt.startsWith("-");
-            const limpo = isInvertido ? txt.substring(1) : txt;
-            return { id: `a_${index}`, text: limpo, inv: isInvertido };
-        });
+    // Salvar no histórico
+    salvarHistorico(leitoId, prontuario, tipo, resumo);
 
-        localStorage.setItem("cfg_checklist_list", JSON.stringify(checklistItensAtuais));
-        localStorage.setItem("cfg_alta_list", JSON.stringify(altaItensAtuais));
-        localStorage.setItem("cfg_nvidia_key", apiKeyInput);
+  } catch (err) {
+    resultadoDiv.innerHTML = `<p class="text-red-600">Erro na API: ${err.message}</p>`;
+  }
+}
 
-        renderizarCamposFormularios();
-        toggleConfigPanel();
-        if (leitoAtual) carregarLeitoExistenteAposMudanca();
-        alert("Configurações atualizadas com sucesso!");
-    }
+function copiarResumo(btn) {
+  const text = btn.parentElement.querySelector('p').textContent;
+  navigator.clipboard.writeText(text);
+  btn.textContent = "✅ Copiado!";
+  setTimeout(() => btn.textContent = "Copiar Texto", 2000);
+}
 
-    function renderizarCamposFormularios() {
-        const chkContainer = document.getElementById("checklist-container");
-        chkContainer.innerHTML = checklistItensAtuais.map(item => `
-            <div class="chk-item">
-                <span class="chk-label">${item.text}</span>
-                <div class="radio-group">
-                    <label><input type="radio" name="chk_${item.id}" id="chk_${item.id}_sim" value="sim"> [ ] sim</label>
-                    <label><input type="radio" name="chk_${item.id}" id="chk_${item.id}_nao" value="nao"> [ ] não</label>
-                </div>
-            </div>
-        `).join("");
+function salvarHistorico(leitoId, prontuario, tipo, resumo) {
+  const entry = {
+    data: new Date().toLocaleString('pt-BR'),
+    leito: leitoId,
+    prontuario: prontuario,
+    tipo: tipo,
+    resumo: resumo
+  };
+  historico.unshift(entry);
+  localStorage.setItem('handoffHistorico', JSON.stringify(historico));
+  renderHistorico();
+}
 
-        const altaContainer = document.getElementById("alta-container");
-        altaContainer.innerHTML = altaItensAtuais.map(item => `
-            <div class="chk-item">
-                <span class="chk-label">${item.text}</span>
-                <div class="radio-group">
-                    <label><input type="radio" name="alta_${item.id}" id="alta_${item.id}_sim" value="sim"> [ ] sim</label>
-                    <label><input type="radio" name="alta_${item.id}" id="alta_${item.id}_nao" value="nao"> [ ] não</label>
-                </div>
-            </div>
-        `).join("");
-    }
+function renderHistorico() {
+  const div = document.getElementById('historico');
+  div.innerHTML = historico.map(h => `
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <small class="text-gray-500">${h.data} - ${h.leito} - ${h.prontuario}</small>
+      <p class="mt-2 text-sm whitespace-pre-wrap">${h.resumo}</p>
+    </div>
+  `).join('');
+}
 
-    function carregarMemoriaClinica() {
-        const dadosSalvos = localStorage.getItem("app_med_data");
-        const timestamp = localStorage.getItem("app_med_timestamp");
-        
-        if (dadosSalvos && timestamp) {
-            if (Date.now() - parseInt(timestamp) < CONFIG.MEMORY_TIMEOUT) {
-                bancoDeDados = JSON.parse(dadosSalvos);
-            } else {
-                localStorage.removeItem("app_med_data");
-                localStorage.removeItem("app_med_timestamp");
-            }
-        }
-    }
+function exportarTXT() {
+  if (historico.length === 0) return alert("Nenhum resumo gerado ainda.");
+  
+  let texto = `HandoffMed - Plantão ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  historico.forEach(h => {
+    texto += `=== ${h.leito} | ${h.prontuario} | ${h.tipo.toUpperCase()} ===\n`;
+    texto += h.resumo + "\n\n";
+  });
 
-    function salvarMemoriaClinica() {
-        localStorage.setItem("app_med_data", JSON.stringify(bancoDeDados));
-        localStorage.setItem("app_med_timestamp", Date.now().toString());
-    }
+  const blob = new Blob([texto], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Handoff_Plantao_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
 
-    function renderizarLeitos(setor, total, containerId, prefixo) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = "";
-        for (let i = 1; i <= total; i++) {
-            const idLeito = `${prefixo}-${i}`;
-            const dadosLeito = bancoDeDados[idLeito] || {};
-            const temEvolucao = dadosLeito.evolvido ? "status-green" : "status-red";
-            
-            const btn = document.createElement("button");
-            btn.className = "btn-bed";
-            btn.id = `btn-${idLeito}`;
-            btn.onclick = () => carregarLeito(idLeito, setor, i, prefixo);
-            btn.innerHTML = `
-                <span>Leito ${i}</span>
-                <div class="status-light ${temEvolucao}" id="light-${idLeito}"></div>
-            `;
-            container.appendChild(btn);
-        }
-    }
-
-    function carregarLeito(idLeito, setor, numero, prefixo) {
-        leitoAtual = idLeito;
-        localizacaoAtualTexto = `${prefixo} Leito ${numero}`;
-        document.querySelectorAll(".btn-bed").forEach(b => b.classList.remove("active"));
-        document.getElementById(`btn-${idLeito}`).classList.add("active");
-        
-        document.getElementById("workspace-title").innerText = `${setor} - Leito ${numero}`;
-        document.getElementById("workspace").style.display = "block";
-        document.getElementById("results-area").style.display = "none";
-
-        const dados = bancoDeDados[idLeito] || {};
-        document.getElementById("input-evolution").value = dados.evolucaoBruta || "";
-
-        preencherRespostasExistentes(dados);
-    }
-
-    function carregarLeitoExistenteAposMudanca() {
-        const dados = bancoDeDados[leitoAtual] || {};
-        preencherRespostasExistentes(dados);
-    }
-
-    function preencherRespostasExistentes(dados) {
-        checklistItensAtuais.forEach(item => {
-            const radSim = document.getElementById(`chk_${item.id}_sim`);
-            const radNao = document.getElementById(`chk_${item.id}_nao`);
-            if (radSim && radNao) {
-                if (dados.checklist && dados.checklist[item.id] === "sim") radSim.checked = true;
-                else if (dados.checklist && dados.checklist[item.id] === "nao") radNao.checked = true;
-                else { radSim.checked = false; radNao.checked = false; }
-            }
-        });
-
-        altaItensAtuais.forEach(item => {
-            const radSim = document.getElementById(`alta_${item.id}_sim`);
-            const radNao = document.getElementById(`alta_${item.id}_nao`);
-            if (radSim && radNao) {
-                if (dados.altaCheck && dados.altaCheck[item.id] === "sim") radSim.checked = true;
-                else if (dados.altaCheck && dados.altaCheck[item.id] === "nao") radNao.checked = true;
-                else { radSim.checked = false; radNao.checked = false; }
-            }
-        });
-    }
-
-    function calcularCriteriosAlta() {
-        let pontuacao = 0;
-        altaItensAtuais.forEach(item => {
-            const elSim = document.getElementById(`alta_${item.id}_sim`);
-            if (elSim && elSim.checked) {
-                pontuacao += item.inv ? -1 : 1;
-            } else {
-                const elNao = document.getElementById(`alta_${item.id}_nao`);
-                if (elNao && elNao.checked) {
-                    pontuacao += item.inv ? 1 : -1;
-                }
-            }
-        });
-        return pontuacao;
-    }
-
-    async function processarDadosLeito() {
-        if (!leitoAtual) return;
-
-        const evolucaoTexto = document.getElementById("input-evolution").value.trim();
-        if (!evolucaoTexto) {
-            alert("Por favor, insira a evolução médica.");
-            return;
-        }
-
-        const apiKey = localStorage.getItem("cfg_nvidia_key") || "";
-        if (!apiKey) {
-            alert("Por favor, clique no botão cinza '⚙ Configurações do Sistema' no topo e insira sua NVIDIA API KEY para processar.");
-            toggleConfigPanel();
-            return;
-        }
-
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("results-area").style.display = "none";
-
-        const checklistSalvo = {};
-        checklistItensAtuais.forEach(item => {
-            const sim = document.getElementById(`chk_${item.id}_sim`).checked;
-            const nao = document.getElementById(`chk_${item.id}_nao`).checked;
-            checklistSalvo[item.id] = sim ? "sim" : (nao ? "nao" : "");
-        });
-
-        const altaSalvo = {};
-        altaItensAtuais.forEach(item => {
-            const sim = document.getElementById(`alta_${item.id}_sim`).checked;
-            const nao = document.getElementById(`alta_${item.id}_nao`).checked;
-            altaSalvo[item.id] = sim ? "sim" : (nao ? "nao" : "");
-        });
-
-        const pontuacaoAlta = calcularCriteriosAlta();
-
-        if (!bancoDeDados[leitoAtual]) bancoDeDados[leitoAtual] = {};
-        bancoDeDados[leitoAtual].evolucaoBruta = evolucaoTexto;
-        bancoDeDados[leitoAtual].checklist = checklistSalvo;
-        bancoDeDados[leitoAtual].altaCheck = altaSalvo;
-        bancoDeDados[leitoAtual].pontuacaoAlta = pontuacaoAlta;
-        bancoDeDados[leitoAtual].localizacao = localizacaoAtualTexto;
-
-        const promptDeProcessamento = construirPromptIA(evolucaoTexto, checklistSalvo, altaSalvo, pontuacaoAlta, localizacaoAtualTexto);
-
-        try {
-            const response = await fetch(CONFIG.PROXY_URL, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: CONFIG.MODEL,
-                    messages: [
-                        { role: "system", content: "Voce e um assistente medico especialista em compilaçao e auditoria de prontuarios estruturados na passagem de caso (SOAP). Responda apenas com texto plano corrido estruturado de forma linear tradicional dentro das tags XML especificadas, obedecendo regras estritas de sigilo e resoluçao de termos tecnicos." },
-                        { role: "user", content: promptDeProcessamento }
-                    ],
-                    temperature: 0.1
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Servidor respondeu com erro HTTP ${response.status}. Verifique se sua API Key de configurações está correta.`);
-            }
-
-            const data = await response.json();
-            separarOutputs(data.choices[0].message.content);
-
-            bancoDeDados[leitoAtual].evolvido = true;
-            document.getElementById(`light-${leitoAtual}`).className = "status-light status-green";
-            salvarMemoriaClinica();
-
-        } catch (error) {
-            alert("Erro durante o processamento: " + error.message);
-        } finally {
-            document.getElementById("loading").style.display = "none";
-        }
-    }
-
-    function construirPromptIA(evolucao, chk, alta, pontuacao, localizacao) {
-        let checklistTexto = "CHECKLIST DIARIO REALIZADO PELO PLANTONISTA BEIRA LEITO:\n";
-        checklistItensAtuais.forEach(item => {
-            const r = chk[item.id] ? chk[item.id].toUpperCase() : "NAO RESPONDIDO";
-            checklistTexto += `- ${item.text}: ${r}\n`;
-        });
-
-        let altaTexto = `PONTUACAO DO CRITERIO DE ALTA PARA ENFERMARIA DE CLINICA MEDICA: ${pontuacao} PONTOS\n`;
-        if (pontuacao < 5) altaTexto += "Resultado: Paciente provavelmente nao esta de alta para enfermaria de clinica medica.\n";
-        else if (pontuacao >= 5 && pontuacao <= 8) altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica, reavaliar cuidadosamente.\n";
-        else altaTexto += "Resultado: Provavelmente esta de alta para a enfermaria de clinica medica.\n";
-
-        return `
-Você deve ler os registros médicos abaixo e atuar como um auditor especialista clínico. Analise a evolução cronológica, resolva as abreviações e monte os relatórios estruturados.
-
-DIRETRIZES ÉTICAS E DE TRADUÇÃO (OBRIGATÓRIO):
-1. ANONIMIZAÇÃO RIGOROSA: Nomes completos devem virar apenas Iniciais (Ex: João da Silva vira JS). Delete CPFs, identidades e registros pessoais numéricos.
-2. CONVERSÃO ÉTICA PARA CID-10: Doenças com potencial estigma social ou conotações legais (Neoplasias/Câncer, Tuberculose, HIV, AIDS, ISTs, tentativas de auto-extermínio ou interrupção de gravidez) devem ser OBRIGATORIAMENTE convertidas para seus respectivos códigos CID-10 no texto para evitar exposição desnecessária do paciente.
-3. GLOSSÁRIO DE TERMOS MÉDICOS (Use para traduzir/esclarecer se aplicável): IH/DI (Data de internação), CNO2 (Cateter Nasal de O2), PC/PS (Pressão Controlada ou Suporte), PFC (Plasma Fresco Congelado), RNC (Rebaixamento de Nível de Consciência), TOT/IOT (Intubação Oro Traqueal), TQT (Traqueostomia), LE (Laparotomia Exploradora), VMI (Ventilação Mecânica Invasiva), VNI (Ventilação Não Invasiva), TNE (Terapia Nutricional Enteral), SF (Soro Fisiológico), SG (Soro Glicosado).
-4. PESO PADRÃO: Se não houver peso explícito na evolução, assuma universalmente 75Kg.
-5. ESTILO: Português clássico e formal, sem marcas textuais de markdown (asteriscos, hashtags), sem tabelas ou colunas. Texto corrido linear simples.
-
---- EVOLUÇÃO MÉDICA DE HOJE INSERIDA ---
-${evolucao}
-
---- DADOS ADICIONAIS DO FORMULÁRIO ---
-${checklistTexto}
-${altaTexto}
-LOCALIZAÇÃO ATUAL DO LEITO: ${localizacao}
-
-Gere o resultado estritamente dividido em duas tags delimitadoras estruturantes exatamente assim:
-
-<ROUND_MEDICO>
-[Gere aqui o MODELO_ROUND_MEDICO seguindo esta estrutura sequencial linear:
-1. Identificação (Iniciais do Nome, idade, sexo, procedência)
-2. Data/Tempo de Internação e Motivo da Internação
-3. Situação cirúrgica (Se PO, tempo decorrido, procedimento)
-4. Comorbidades e condições associadas
-5. Situação clínica atual (Sedação, Drogas em infusão, Invasões, Sinais vitais atuais, VM se houver, Estado neurológico, Exame físico relevante)
-6. Gasometria arterial
-7. Exames de imagem (resuma laudos longos focado nos dados cruciais; achados normais descreva como normais)
-8. Exames laboratoriais relevantes
-9. Antibióticos em uso (nome, dose, tempo de uso)
-10. Impression do caso (sumário)
-11. Condutas e rotina pactuadas
-Incorpore o checklist diário nas sessões pertinentes e adicione ao final os Critérios de Internação em Enfermaria de Clínica Médica com a pontuação e resultado informados.]
-</ROUND_MEDICO>
-
-<PASSAGEM_PLANTAO>
-[Gere aqui o MODELO_PASSAGEM_PLANTAO: Um texto fluido focado na comunicação ágil de médico para médico.
-- O texto DEVE iniciar obrigatoriamente com o padrão: "Iniciais do Nome, XX anos, ${localizacao}."
-- Foque exclusivamente no Estado Geral Atual, na Lista de Problemas Ativos e nas resoluções ou pendências imediatas urgentes para o próximo plantão (vigilâncias, pareceres, exames programados, metas).
-- Mantenha o texto rigorosamente conciso, com tamanho entre 100 e 120 palavras no total.]
-</PASSAGEM_PLANTAO>
-`;
-    }
-
-    function separarOutputs(textoCompleto) {
-        const roundMatch = textoCompleto.match(/<ROUND_MEDICO>([\s\S]*?)<\/ROUND_MEDICO>/);
-        const plantaoMatch = textoCompleto.match(/<PASSAGEM_PLANTAO>([\s\S]*?)<\/PASSAGEM_PLANTAO>/);
-
-        const roundTexto = roundMatch ? roundMatch[1].trim() : "Erro ao extrair o Round Médico.";
-        const plantaoTexto = plantaoMatch ? plantaoMatch[1].trim() : "Erro ao extrair a Passagem de Plantão.";
-
-        document.getElementById("output-round").innerText = roundTexto;
-        document.getElementById("output-plantao").innerText = plantaoTexto;
-
-        bancoDeDados[leitoAtual].relatorioRound = roundTexto;
-        bancoDeDados[leitoAtual].relatorioPlantao = plantaoTexto;
-        salvarMemoriaClinica();
-
-        document.getElementById("results-area").style.display = "block";
-    }
-
-    function renderizarConsolidado() {
-        let consolidado = "========================================================\n";
-        consolidado += "      RELATÓRIO CONSOLIDADO DA UNIDADE (ÚLTIMAS 12H)     \n";
-        consolidado += "========================================================\n\n";
-        
-        let encontrouDados = false;
-
-        for (const [leitoId, dados] of Object.entries(bancoDeDados)) {
-            if (dados.evolvido && dados.relatorioRound) {
-                encontrouDados = true;
-                consolidado += `### LEITO: ${dados.localizacao || leitoId} ###\n\n`;
-                consolidado += "--- ROUND MÉDICO E CRITÉRIOS ---\n";
-                consolidado += dados.relatorioRound + "\n\n";
-                consolidado += "--- PASSAGEM DE PLANTÃO ---\n";
-                consolidado += dados.relatorioPlantao + "\n";
-                consolidado += "--------------------------------------------------------\n\n";
-            }
-        }
-
-        if (!encontrouDados) {
-            document.getElementById("output-consolidado").innerText = "Nenhum leito foi processado nas últimas 12 horas.";
-            document.getElementById("btn-download-consolidado").style.display = "none";
-        } else {
-            document.getElementById("output-consolidado").innerText = consolidado;
-            document.getElementById("btn-download-consolidado").style.display = "inline-block";
-            bancoDeDados["consolidado_texto"] = consolidado;
-        }
-    }
-
-    function downloadTxt(tipo) {
-        let texto = "";
-        let nomeArquivo = "";
-
-        if (tipo === "round" && leitoAtual) {
-            texto = bancoDeDados[leitoAtual].relatorioRound;
-            nomeArquivo = `ROUND_${leitoAtual}.txt`;
-        } else if (tipo === "plantao" && leitoAtual) {
-            texto = bancoDeDados[leitoAtual].relatorioPlantao;
-            nomeArquivo = `PASSAGEM_${leitoAtual}.txt`;
-        } else if (tipo === "consolidado") {
-            texto = bancoDeDados["consolidado_texto"];
-            nomeArquivo = "CONSOLIDADO_UNIDADE.txt";
-        }
-
-        if (!texto) return;
-
-        const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = nomeArquivo;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-
-    window.onload = inicializarApp;
+// Inicializar
+criarLeitos();
+renderHistorico();
 </script>
 
 </body>
